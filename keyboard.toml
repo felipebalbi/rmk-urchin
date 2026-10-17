@@ -62,6 +62,26 @@ ble_profiles_num = 6
 [ble]
 enabled = true
 
+[event.battery_status]
+channel_size = 2
+pubs = 1
+subs = 2
+
+[event.connection_status_change]
+channel_size = 2
+pubs = 2
+subs = 2
+
+[event.layer_change]
+channel_size = 2
+pubs = 2
+subs = 2
+
+[event.central_connected]
+channel_size = 2
+pubs = 1
+subs = 2
+
 [behavior]
 tri_layer = { upper = 1, lower = 2, adjust = 3 }
 
@@ -96,6 +116,7 @@ combos = [
 connection = "ble"
 
 [split.central]
+battery_adc_pin = "vddh"
 rows = 4
 cols = 5
 row_offset = 0
@@ -107,6 +128,7 @@ row_pins = ["P1_00", "P0_11", "P1_04", "P1_06"]
 col_pins = ["P1_15", "P1_13", "P1_11", "P0_10", "P0_09"]
 
 [[split.peripheral]]
+battery_adc_pin = "vddh"
 rows = 4
 cols = 5
 row_offset = 0

@@ -50,6 +50,11 @@ defmt = "1.0"
 defmt-rtt = "1.0"
 panic-probe = { version = "1.0", features = ["print-defmt"] }
 static_cell = "2"
+embedded-graphics = "0.8.2"
+embedded-hal = "1"
+embedded-hal-async = "1"
+heapless = "0.9"
+embassy-futures = "0.1"
 
 [build-dependencies]
 xz2 = "0.1.7"

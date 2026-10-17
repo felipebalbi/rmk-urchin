@@ -7,6 +7,7 @@ use rmk::macros::rmk_central;
 mod display_spi;
 mod nice_view;
 mod screen;
+mod usb_power;
 
 embassy_nrf::bind_interrupts!(struct DisplayIrqs {
     SPI2 => embassy_nrf::spim::InterruptHandler<embassy_nrf::peripherals::SPI2>;
@@ -35,7 +36,7 @@ mod keybaord_central {
         let cs = Output::new(p.P0_06, Level::Low, OutputDrive::Standard);
         let power = Output::new(p.P0_13, Level::High, OutputDrive::Standard);
         let panel = crate::nice_view::NiceView::new(spi, cs, power, embassy_time::Delay);
-        ScreenProcessor::<_, _, _, _, Central>::new(panel)
+        ScreenProcessor::<_, _, _, _, Central>::new(panel, crate::usb_power::is_usb_power_present)
     }
 
     // RMK 0.9 has no post-keymap processor-init hook. Retain macro-generated

@@ -5,6 +5,7 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, ascii::FONT_5X8, MonoTextStyle},
     pixelcolor::BinaryColor,
     prelude::*,
+    primitives::{PrimitiveStyle, Triangle},
     text::{Baseline, Text},
 };
 use embedded_hal::digital::OutputPin;
@@ -33,6 +34,7 @@ pub enum HostLink {
 pub struct ScreenState {
     role: Role,
     battery: Option<u8>,
+    usb_powered: bool,
     profile: u8,
     host: HostLink,
     central_connected: bool,
@@ -44,6 +46,7 @@ impl ScreenState {
         Self {
             role,
             battery: None,
+            usb_powered: false,
             profile: 0,
             host: HostLink::Inactive,
             central_connected: false,
@@ -55,6 +58,13 @@ impl ScreenState {
         let value = percentage.map(|p| p.min(100));
         let changed = self.battery != value;
         self.battery = value;
+        changed
+    }
+
+    /// Local USB supply presence, not charger activity or charge completion.
+    pub fn set_usb_powered(&mut self, powered: bool) -> bool {
+        let changed = self.usb_powered != powered;
+        self.usb_powered = powered;
         changed
     }
 
@@ -129,6 +139,15 @@ impl ScreenState {
         let small = MonoTextStyle::new(&FONT_5X8, BinaryColor::On);
         let large = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
         Text::with_baseline("BATTERY", Point::new(3, 0), small, Baseline::Top).draw(display)?;
+        if self.usb_powered {
+            let white = PrimitiveStyle::with_fill(BinaryColor::On);
+            Triangle::new(Point::new(57, 0), Point::new(50, 6), Point::new(55, 6))
+                .into_styled(white)
+                .draw(display)?;
+            Triangle::new(Point::new(54, 4), Point::new(59, 4), Point::new(51, 11))
+                .into_styled(white)
+                .draw(display)?;
+        }
         Text::with_baseline(
             &self.battery_text(),
             Point::new(3, 12),

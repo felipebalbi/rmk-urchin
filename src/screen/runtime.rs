@@ -164,6 +164,7 @@ impl ScreenRole for Peripheral {
 pub struct ScreenProcessor<SPI, CS, POWER, DELAY, R: ScreenRole> {
     screen: Screen<SPI, CS, POWER, DELAY>,
     subscriptions: Subscriptions,
+    usb_power_present: fn() -> bool,
     failed: bool,
     _role: PhantomData<R>,
 }
@@ -190,10 +191,11 @@ where
     POWER: OutputPin<Error = Infallible>,
     DELAY: DelayNs,
 {
-    pub fn new(panel: NiceView<SPI, CS, POWER, DELAY>) -> Self {
+    pub fn new(panel: NiceView<SPI, CS, POWER, DELAY>, usb_power_present: fn() -> bool) -> Self {
         Self {
             subscriptions: Subscriptions::new(R::ROLE),
             screen: Screen::new(panel, R::ROLE),
+            usb_power_present,
             failed: false,
             _role: PhantomData,
         }
@@ -245,6 +247,9 @@ where
     }
 
     async fn update(&mut self) {
+        self.screen
+            .state_mut()
+            .set_usb_powered((self.usb_power_present)());
         self.subscriptions.drain_into(self.screen.state_mut());
         let previous_success = self.screen.last_success();
         match self.screen.tick(Instant::now().as_micros()).await {

@@ -2,10 +2,12 @@
 
 use core::{convert::Infallible, fmt::Write};
 use embedded_graphics::{
-    mono_font::{ascii::FONT_10X20, ascii::FONT_5X8, MonoTextStyle},
+    mono_font::{ascii::FONT_5X8, MonoTextStyle},
     pixelcolor::BinaryColor,
     prelude::*,
-    primitives::{Line, PrimitiveStyle, Rectangle, Triangle},
+    primitives::{
+        Line, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle, StrokeAlignment, Triangle,
+    },
     text::{Baseline, Text},
 };
 use embedded_hal::digital::OutputPin;
@@ -97,19 +99,6 @@ impl ScreenState {
         changed
     }
 
-    pub fn battery_text(&self) -> String<4> {
-        let mut text = String::new();
-        match self.battery {
-            Some(level) => {
-                let _ = write!(text, "{}%", level);
-            }
-            None => {
-                let _ = text.push_str("--%");
-            }
-        }
-        text
-    }
-
     pub fn layer_text(&self) -> String<12> {
         let mut text = String::new();
         match self.layer {
@@ -139,7 +128,6 @@ impl ScreenState {
     ) -> Result<(), D::Error> {
         display.clear(BinaryColor::Off)?;
         let small = MonoTextStyle::new(&FONT_5X8, BinaryColor::On);
-        let large = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
         Text::with_baseline("BATTERY", Point::new(3, 0), small, Baseline::Top).draw(display)?;
         if self.usb_powered {
             let white = PrimitiveStyle::with_fill(BinaryColor::On);
@@ -150,13 +138,33 @@ impl ScreenState {
                 .into_styled(white)
                 .draw(display)?;
         }
-        Text::with_baseline(
-            &self.battery_text(),
-            Point::new(3, 12),
-            large,
-            Baseline::Top,
-        )
-        .draw(display)?;
+        Rectangle::new(Point::new(3, 12), Size::new(56, 20))
+            .into_styled(
+                PrimitiveStyleBuilder::new()
+                    .stroke_color(BinaryColor::On)
+                    .stroke_width(2)
+                    .stroke_alignment(StrokeAlignment::Inside)
+                    .build(),
+            )
+            .draw(display)?;
+        let white = PrimitiveStyle::with_fill(BinaryColor::On);
+        Rectangle::new(Point::new(59, 18), Size::new(4, 8))
+            .into_styled(white)
+            .draw(display)?;
+        match self.battery {
+            Some(level) => {
+                // Ten columns, each four pixels wide with a one-pixel gap.
+                // Only complete 10% increments are filled; 100% fills all ten.
+                for column in 0..level / 10 {
+                    Rectangle::new(Point::new(6 + i32::from(column) * 5, 15), Size::new(4, 14))
+                        .into_styled(white)
+                        .draw(display)?;
+                }
+            }
+            None => {
+                Text::with_baseline("?", Point::new(29, 18), small, Baseline::Top).draw(display)?;
+            }
+        }
         let label = match self.role {
             Role::Central => "BLUETOOTH",
             Role::Peripheral => "CENTRAL",

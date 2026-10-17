@@ -361,17 +361,153 @@ mod tests {
     }
 
     #[test]
+    fn battery_icon_fills_ten_separated_columns_at_ten_percent_thresholds() {
+        for role in [Role::Central, Role::Peripheral] {
+            let mut state = ScreenState::new(role);
+            state.set_battery(Some(0));
+            let unchanged: Vec<_> = image(&state)
+                .into_iter()
+                .filter(|(_, y)| !(12..32).contains(y))
+                .collect();
+            for (level, filled) in [
+                (0, 0),
+                (1, 0),
+                (9, 0),
+                (10, 1),
+                (19, 1),
+                (20, 2),
+                (29, 2),
+                (30, 3),
+                (39, 3),
+                (40, 4),
+                (49, 4),
+                (50, 5),
+                (59, 5),
+                (60, 6),
+                (69, 6),
+                (70, 7),
+                (79, 7),
+                (80, 8),
+                (89, 8),
+                (90, 9),
+                (93, 9),
+                (99, 9),
+                (100, 10),
+                (255, 10),
+            ] {
+                state.set_battery(Some(level));
+                let pixels = image(&state);
+                // The wide body, right-hand terminal and interior gaps remain
+                // visible even when the battery is empty or completely full.
+                for point in [(3, 12), (58, 12), (3, 31), (58, 31), (61, 21)] {
+                    assert!(pixels.contains(&point), "missing battery outline {point:?}");
+                }
+                for (column, x) in [6, 11, 16, 21, 26, 31, 36, 41, 46, 51]
+                    .into_iter()
+                    .enumerate()
+                {
+                    for dx in 0..4 {
+                        for y in 15..29 {
+                            assert_eq!(
+                                pixels.contains(&(x + dx, y)),
+                                column < filled,
+                                "{role:?}: level {level}, column {column}"
+                            );
+                        }
+                    }
+                }
+                for x in [10, 15, 20, 25, 30, 35, 40, 45, 50] {
+                    for y in 15..29 {
+                        assert!(!pixels.contains(&(x, y)), "columns must stay separated");
+                    }
+                }
+                assert_eq!(
+                    pixels
+                        .into_iter()
+                        .filter(|(_, y)| !(12..32).contains(y))
+                        .collect::<Vec<_>>(),
+                    unchanged,
+                    "battery changes must not alter the label, USB bolt or other status fields"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn unavailable_battery_shows_question_mark_instead_of_empty_or_full_segments() {
+        use embedded_graphics::{
+            mono_font::{ascii::FONT_5X8, MonoTextStyle},
+            text::{Baseline, Text},
+        };
+        for role in [Role::Central, Role::Peripheral] {
+            let unknown = ScreenState::new(role);
+            let mut empty = ScreenState::new(role);
+            empty.set_battery(Some(0));
+            assert_ne!(image(&unknown), image(&empty));
+            let mut expected = FrameBuffer::new();
+            empty.render(&mut expected, 0).unwrap();
+            Text::with_baseline(
+                "?",
+                Point::new(29, 18),
+                MonoTextStyle::new(&FONT_5X8, BinaryColor::On),
+                Baseline::Top,
+            )
+            .draw(&mut expected)
+            .unwrap();
+            let mut actual = FrameBuffer::new();
+            unknown.render(&mut actual, 0).unwrap();
+            assert_eq!(
+                actual.frame(false),
+                expected.frame(false),
+                "unknown level must show only a centered question mark inside the outline"
+            );
+        }
+    }
+
+    #[test]
+    fn battery_updates_erase_old_segments_and_unknown_marker_on_the_panel() {
+        for role in [Role::Central, Role::Peripheral] {
+            let (p, trace) = panel();
+            let mut screen = Screen::new(p, role);
+            screen.state_mut().set_usb_powered(true);
+            futures::executor::block_on(screen.tick(0)).unwrap();
+            for (now, level) in [
+                (16_000, Some(100)),
+                (128_000, Some(30)),
+                (240_000, None),
+                (352_000, Some(0)),
+                (464_000, Some(93)),
+            ] {
+                screen.state_mut().set_battery(level);
+                futures::executor::block_on(screen.tick(now)).unwrap();
+                let mut state = ScreenState::new(role);
+                state.set_usb_powered(true);
+                state.set_battery(level);
+                let mut clean = FrameBuffer::new();
+                clean.clear(BinaryColor::Off).unwrap();
+                state.render(&mut clean, now).unwrap();
+                let trace = trace.borrow();
+                let actual = trace.writes.last().unwrap();
+                assert_eq!(actual.len(), 1498, "battery change must reach the panel");
+                assert_eq!(
+                    &actual[1..],
+                    &clean.frame(false)[1..],
+                    "{role:?}: stale battery pixels after changing to {level:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn role_state_unknown_battery_clamping_labels_and_role_filtering() {
         let mut c = ScreenState::new(Role::Central);
         let mut p = ScreenState::new(Role::Peripheral);
-        assert_eq!(c.battery_text().as_str(), "--%");
         assert!(!c.set_battery(None));
         assert!(c.set_battery(Some(0)));
-        assert_eq!(c.battery_text().as_str(), "0%");
         assert!(c.set_battery(Some(255)));
-        assert_eq!(c.battery_text().as_str(), "100%");
+        let full = image(&c);
         assert!(!c.set_battery(Some(100)));
-        assert_eq!(p.battery_text().as_str(), "--%");
+        assert_eq!(image(&c), full);
         assert!(p.set_battery(Some(47)));
         assert!(p.set_battery(None));
         for (layer, label) in [
@@ -638,11 +774,13 @@ mod tests {
         assert_eq!(c, expected);
         publish_event(BatteryStatusEvent(BatteryStatus::Unavailable));
         central.drain_into(&mut c);
-        assert_eq!(c.battery_text().as_str(), "--%");
+        expected.set_battery(None);
+        assert_eq!(c, expected);
         // A separate instance has not consumed this later local measurement yet.
-        assert_eq!(p.battery_text().as_str(), "73%");
+        assert_eq!(p, expected_p);
         peripheral.drain_into(&mut p);
-        assert_eq!(p.battery_text().as_str(), "--%");
+        expected_p.set_battery(None);
+        assert_eq!(p, expected_p);
     }
 
     #[test]
@@ -950,7 +1088,6 @@ mod tests {
                 let mut state = ScreenState::new(role);
                 state.set_battery(battery);
                 let original = image(&state);
-                let battery_text = state.battery_text();
                 assert!(bolt_pixels(&state).is_empty());
                 assert!(!state.set_usb_powered(false));
                 assert!(state.set_usb_powered(true));
@@ -973,7 +1110,6 @@ mod tests {
                     .filter(|p| !bolt.contains(p))
                     .collect();
                 assert_eq!(without_bolt, original);
-                assert_eq!(state.battery_text(), battery_text);
                 let mut fb = FrameBuffer::new();
                 state.render(&mut fb, 0).unwrap();
                 assert!(state.set_usb_powered(false));
@@ -1061,7 +1197,6 @@ mod tests {
         expected_right.set_usb_powered(true);
         expected_right.render(&mut fb, 0).unwrap();
         assert_eq!(right.borrow().writes.last().unwrap(), fb.frame(true));
-        assert_eq!(expected_right.battery_text().as_str(), "--%");
         RIGHT_USB.store(false, Ordering::Relaxed);
         remote.usb = UsbState::Configured;
         rmk::event::publish_event(ConnectionStatusChangeEvent(remote));

@@ -33,6 +33,10 @@ RMK defaults to USB-priority mode if a USB cable is connected. After flashing, r
 
 ## Host regression tests
 
+Each half shows a horizontal battery icon with ten segments (one per complete
+10%), or a `?` when its battery level is unavailable. The bolt beside `BATTERY`
+indicates local USB power, not charging activity.
+
 Run `cargo make test`, or without cargo-make:
 
 ```sh

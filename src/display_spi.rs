@@ -103,28 +103,28 @@ mod nrf {
         peripherals, spim, Peri,
     };
 
-    struct Spi3Control;
+    struct Spi2Control;
 
-    impl DmaControl for Spi3Control {
+    impl DmaControl for Spi2Control {
         fn disable_end_interrupt(&mut self) {
-            embassy_nrf::pac::SPIM3
+            embassy_nrf::pac::SPIM2
                 .intenclr()
                 .write(|w| w.set_end(true));
         }
         fn ended(&self) -> bool {
-            embassy_nrf::pac::SPIM3.events_end().read() != 0
+            embassy_nrf::pac::SPIM2.events_end().read() != 0
         }
         fn clear_stopped(&mut self) {
-            embassy_nrf::pac::SPIM3.events_stopped().write_value(0);
+            embassy_nrf::pac::SPIM2.events_stopped().write_value(0);
         }
         fn stop(&mut self) {
-            embassy_nrf::pac::SPIM3.tasks_stop().write_value(1);
+            embassy_nrf::pac::SPIM2.tasks_stop().write_value(1);
         }
         fn stopped(&mut self) -> bool {
-            embassy_nrf::pac::SPIM3.events_stopped().read() != 0
+            embassy_nrf::pac::SPIM2.events_stopped().read() != 0
         }
         fn reset_after_abort(&mut self) {
-            let r = embassy_nrf::pac::SPIM3;
+            let r = embassy_nrf::pac::SPIM2;
             // HAL's nRF52840 ISR only wakes and disables END interrupts; it
             // never starts DMA. With END masked and DMA quiescent, retire all
             // stale events/pointers before the next HAL write arms END again.
@@ -137,35 +137,36 @@ mod nrf {
             r.dma().rx().maxcnt().write(|w| w.set_maxcnt(0));
             r.dma().tx().ptr().write_value(0);
             r.dma().rx().ptr().write_value(0);
-            interrupt::typelevel::SPIM3::unpend();
+            interrupt::typelevel::SPI2::unpend();
         }
     }
 
-    /// Owns SPI3 through the HAL for its entire lifetime. No raw peripheral or
+    /// Owns SPI2 through the HAL for its entire lifetime. Avoids the nRF52840
+    /// SPIM3-specific anomaly 198 without reserving a RAM bank. No raw peripheral or
     /// inner HAL handle escapes. Normal transfers remain interrupt-driven;
     /// only cancellation synchronously waits for STOPPED (at most the current
     /// byte in normal hardware operation), without globally masking interrupts.
     ///
     /// Nordic nRF52840 PS v1.1 §§6.25.1/6.25.4: STOP completes the current byte,
     /// STOPPED means stopped, END means both DMA buffers are no longer accessed.
-    pub struct DisplaySpi<'d>(CancelSafe<spim::Spim<'d>, Spi3Control>);
+    pub struct DisplaySpi<'d>(CancelSafe<spim::Spim<'d>, Spi2Control>);
 
     impl<'d> DisplaySpi<'d> {
         pub fn new(
-            spi: Peri<'d, peripherals::SPI3>,
+            spi: Peri<'d, peripherals::SPI2>,
             irq: impl interrupt::typelevel::Binding<
-                    interrupt::typelevel::SPIM3,
-                    spim::InterruptHandler<peripherals::SPI3>,
+                    interrupt::typelevel::SPI2,
+                    spim::InterruptHandler<peripherals::SPI2>,
                 > + 'd,
             sck: Peri<'d, peripherals::P0_20>,
             mosi: Peri<'d, peripherals::P0_17>,
             config: spim::Config,
         ) -> Self {
             let spi = spim::Spim::new_txonly(spi, irq, sck, mosi, config);
-            // SAFETY: construction consumes the unique SPI3 token, the abort
-            // register block is exactly SPIM3, and HAL's END-only ISR does not
+            // SAFETY: construction consumes the unique SPI2 token, the abort
+            // register block is exactly SPIM2, and HAL's END-only ISR does not
             // start transfers. The private wrapper prevents bypassing guards.
-            Self(unsafe { CancelSafe::new(spi, Spi3Control) })
+            Self(unsafe { CancelSafe::new(spi, Spi2Control) })
         }
     }
 

@@ -125,9 +125,9 @@ impl ScreenState {
         &self,
         display: &mut D,
     ) -> Result<(), D::Error> {
-        display.clear(BinaryColor::On)?;
-        let small = MonoTextStyle::new(&FONT_5X8, BinaryColor::Off);
-        let large = MonoTextStyle::new(&FONT_10X20, BinaryColor::Off);
+        display.clear(BinaryColor::Off)?;
+        let small = MonoTextStyle::new(&FONT_5X8, BinaryColor::On);
+        let large = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
         Text::with_baseline("BATTERY", Point::new(3, 0), small, Baseline::Top).draw(display)?;
         Text::with_baseline(
             &self.battery_text(),

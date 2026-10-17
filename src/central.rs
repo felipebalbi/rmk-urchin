@@ -9,7 +9,7 @@ mod nice_view;
 mod screen;
 
 embassy_nrf::bind_interrupts!(struct DisplayIrqs {
-    SPIM3 => embassy_nrf::spim::InterruptHandler<embassy_nrf::peripherals::SPI3>;
+    SPI2 => embassy_nrf::spim::InterruptHandler<embassy_nrf::peripherals::SPI2>;
 });
 
 #[rmk_central]
@@ -26,7 +26,7 @@ mod keybaord_central {
         config.mode = spim::MODE_0;
         config.bit_order = spim::BitOrder::LsbFirst;
         let spi = crate::display_spi::DisplaySpi::new(
-            p.SPI3,
+            p.SPI2,
             crate::DisplayIrqs,
             p.P0_20,
             p.P0_17,

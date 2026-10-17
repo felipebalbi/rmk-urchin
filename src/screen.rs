@@ -5,7 +5,7 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, ascii::FONT_5X8, MonoTextStyle},
     pixelcolor::BinaryColor,
     prelude::*,
-    primitives::{PrimitiveStyle, Triangle},
+    primitives::{Line, PrimitiveStyle, Rectangle, Triangle},
     text::{Baseline, Text},
 };
 use embedded_hal::digital::OutputPin;
@@ -15,6 +15,7 @@ use heapless::String;
 use crate::nice_view::NiceView;
 
 #[cfg(target_os = "none")]
+#[path = "screen/runtime.rs"]
 pub mod runtime;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -134,6 +135,7 @@ impl ScreenState {
     pub fn render<D: DrawTarget<Color = BinaryColor>>(
         &self,
         display: &mut D,
+        now_us: u64,
     ) -> Result<(), D::Error> {
         display.clear(BinaryColor::Off)?;
         let small = MonoTextStyle::new(&FONT_5X8, BinaryColor::On);
@@ -160,27 +162,41 @@ impl ScreenState {
             Role::Peripheral => "CENTRAL",
         };
         Text::with_baseline(label, Point::new(3, 42), small, Baseline::Top).draw(display)?;
-        let link = match self.role {
-            Role::Central => {
-                let mut profile: String<12> = String::new();
-                let _ = write!(profile, "Profile {}", self.profile);
-                Text::with_baseline(&profile, Point::new(3, 54), small, Baseline::Top)
+        if self.bluetooth_visible(now_us) {
+            let stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 2);
+            // The standard Bluetooth rune, with solid strokes on the dark panel.
+            for (start, end) in [
+                ((56, 40), (56, 52)),
+                ((56, 52), (62, 48)),
+                ((62, 48), (52, 42)),
+                ((52, 50), (62, 44)),
+                ((62, 44), (56, 40)),
+            ] {
+                Line::new(Point::from(start), Point::from(end))
+                    .into_styled(stroke)
                     .draw(display)?;
-                match self.host {
-                    HostLink::Inactive => "Inactive",
-                    HostLink::Advertising => "Advertising",
-                    HostLink::Connected => "Connected",
+            }
+            let disconnected = match self.role {
+                Role::Central => self.host == HostLink::Inactive,
+                Role::Peripheral => !self.central_connected,
+            };
+            if disconnected {
+                // Clear behind the X so it remains legible over the rune.
+                Rectangle::new(Point::new(59, 45), Size::new(9, 9))
+                    .into_styled(PrimitiveStyle::with_fill(BinaryColor::Off))
+                    .draw(display)?;
+                for (start, end) in [((60, 46), (66, 52)), ((60, 52), (66, 46))] {
+                    Line::new(Point::from(start), Point::from(end))
+                        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
+                        .draw(display)?;
                 }
             }
-            Role::Peripheral => {
-                if self.central_connected {
-                    "Connected"
-                } else {
-                    "Disconnected"
-                }
-            }
-        };
-        Text::with_baseline(link, Point::new(3, 66), small, Baseline::Top).draw(display)?;
+        }
+        if self.role == Role::Central {
+            let mut profile: String<12> = String::new();
+            let _ = write!(profile, "Profile {}", self.profile);
+            Text::with_baseline(&profile, Point::new(3, 54), small, Baseline::Top).draw(display)?;
+        }
         if self.role == Role::Central {
             Text::with_baseline("LAYER", Point::new(3, 104), small, Baseline::Top).draw(display)?;
             Text::with_baseline(&self.layer_text(), Point::new(3, 116), small, Baseline::Top)
@@ -188,12 +204,19 @@ impl ScreenState {
         }
         Ok(())
     }
+
+    fn bluetooth_visible(&self, now_us: u64) -> bool {
+        self.role != Role::Central
+            || self.host != HostLink::Advertising
+            || (now_us / BLINK_PERIOD_US).is_multiple_of(2)
+    }
 }
 
 /// LD-29Y03 table 6-3-1 requires 57–70 frames/s with EXTMODE low.
 /// Every transaction alternates polarity; unchanged content uses hold mode.
 pub const PANEL_PERIOD_US: u64 = 16_000;
 const IMAGE_PERIOD_US: u64 = 100_000;
+const BLINK_PERIOD_US: u64 = 500_000;
 
 /// Start-to-start deadlines, not a sleep after SPI completion. If a transaction
 /// overruns, skip missed ticks instead of producing short catch-up COM phases.
@@ -219,7 +242,7 @@ impl PanelCadence {
 pub struct Screen<SPI, CS, POWER, DELAY> {
     panel: NiceView<SPI, CS, POWER, DELAY>,
     state: ScreenState,
-    rendered: Option<ScreenState>,
+    rendered: Option<(ScreenState, bool)>,
     initialized: bool,
     force_redraw: bool,
     next_polarity: bool,
@@ -274,7 +297,8 @@ where
         }
         // There is no readback: on failure the polarity on glass is unknown.
         // Keep alternating attempts and force a complete image after recovery.
-        let dirty = self.force_redraw || self.rendered != Some(self.state);
+        let visible = self.state.bluetooth_visible(now_us);
+        let dirty = self.force_redraw || self.rendered != Some((self.state, visible));
         let image_due = self
             .last_image_us
             .is_none_or(|last| now_us.saturating_sub(last) >= IMAGE_PERIOD_US);
@@ -283,10 +307,10 @@ where
         self.force_redraw = true;
         if dirty && image_due {
             let snapshot = self.state;
-            let _ = snapshot.render(self.panel.framebuffer());
+            let _ = snapshot.render(self.panel.framebuffer(), now_us);
             self.last_image_us = Some(now_us);
             self.panel.flush(polarity).await?;
-            self.rendered = Some(snapshot);
+            self.rendered = Some((snapshot, visible));
         } else {
             self.panel.maintain(polarity).await?;
         }

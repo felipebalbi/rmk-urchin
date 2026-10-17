@@ -1,0 +1,18 @@
+[package]
+name = "urchin-host-tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dev-dependencies]
+embedded-graphics = "0.8.2"
+embedded-hal = "1"
+embedded-hal-async = "1"
+heapless = "0.9"
+futures = "0.3"
+rmk = { version = "=0.9.0", default-features = false, features = ["std", "log", "split"] }
+embassy-time = "0.5"
+embassy-futures = "0.1"
+critical-section = { version = "1", features = ["std"] }
+defmt = { version = "1", features = ["unstable-test"] }
+embedded-hal-mock = { version = "0.11.1", default-features = false, features = ["eh1", "embedded-hal-async"] }

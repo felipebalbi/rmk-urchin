@@ -1,3 +1,11 @@
+[tasks.test]
+clear = true
+description = "Run native firmware checks against published RMK (no hardware needed)"
+script = '''
+host=$(rustc -vV | sed -n 's/^host: //p')
+cargo test --manifest-path tests/host/Cargo.toml --target "$host" --locked
+'''
+
 [tasks.install-llvm-tools]
 install_crate = { rustup_component_name = "llvm-tools" }
 

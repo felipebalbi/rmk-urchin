@@ -30,3 +30,29 @@ Most nice!nano compatible boards have bootloader with SoftDevice pre-flashed. Si
 ### Additional notes
 
 RMK defaults to USB-priority mode if a USB cable is connected. After flashing, remember to disconnect the USB cable, or [switch to BLE-priority mode](https://rmk.rs/docs/features/wireless.html#multiple-profile-support) by pressing User11(Switch Output) key.
+
+## Host regression tests
+
+Run `cargo make test`, or without cargo-make:
+
+```sh
+cargo test --manifest-path tests/host/Cargo.toml \
+  --target "$(rustc -vV | sed -n 's/^host: //p')" --locked
+```
+
+The explicit host target overrides this repository's default ARM target. Run
+from the repository root so `.cargo/config.toml` supplies the real
+`keyboard.toml` to RMK's configuration build. The separate test crate keeps
+host-only features and dependencies out of firmware builds.
+
+These checks compile the firmware's display modules directly and use published
+RMK 0.9.0, not a vendored or patched checkout. Coverage includes framebuffer
+rotation/framing, role-specific Bluetooth icons and advertising animation,
+panel refresh scheduling and recovery, DMA cancellation ordering, startup RMK
+events, local USB power indicators, and configured 5 ms debounce behavior.
+`embedded-hal-mock` checks queued SPI/GPIO operations; stateful test doubles
+model pending transfers, power loss, injected failures, and elapsed time.
+
+They do not validate physical radio, GPIO, or display timing. The earlier spike's
+full key/chord scenarios require RMK's unpublished simulator and are not part
+of this suite.

@@ -96,7 +96,7 @@ impl<CS: OutputPin<Error = Infallible>> Drop for Selected<'_, CS> {
 pub struct NiceView<SPI, CS, POWER, DELAY> {
     spi: SPI,
     cs: CS,
-    // Keep the active-high external-supply cutoff owned and driven low.
+    // nice!nano v2: retain the active-high external-supply enable driven high.
     _power: POWER,
     delay: DELAY,
     framebuffer: FrameBuffer,
@@ -112,7 +112,7 @@ where
 {
     pub fn new(spi: SPI, mut cs: CS, mut power: POWER, delay: DELAY) -> Self {
         let _ = cs.set_low();
-        let _ = power.set_low();
+        let _ = power.set_high();
         Self {
             spi,
             cs,

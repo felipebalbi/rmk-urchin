@@ -33,7 +33,7 @@ mod keybaord_central {
             config,
         );
         let cs = Output::new(p.P0_06, Level::Low, OutputDrive::Standard);
-        let power = Output::new(p.P0_13, Level::Low, OutputDrive::Standard);
+        let power = Output::new(p.P0_13, Level::High, OutputDrive::Standard);
         let panel = crate::nice_view::NiceView::new(spi, cs, power, embassy_time::Delay);
         ScreenProcessor::<_, _, _, _, Central>::new(panel)
     }

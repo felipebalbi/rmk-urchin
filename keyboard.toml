@@ -91,9 +91,13 @@ tri_layer = { upper = 1, lower = 2, adjust = 3 }
 # Home-row mods: opposite-hand chords hold; same-hand rolls tap.
 permissive_hold = true
 unilateral_tap = true
-# No typing-speed shortcut or tap-then-hold repeat, matching the ZMK config.
-enable_flow_tap = false
+# Native RMK fast-typing guard: favor taps within 120ms of a simple key press.
+# Pause briefly before an intentional modifier/layer hold. This also applies
+# to THUMB via inheritance; it is a workaround, not exact ZMK event ordering.
+enable_flow_tap = true
+prior_idle_time = "120ms"
 hold_timeout = "200ms"
+# Keep tap-then-hold repeat disabled.
 quick_tap_timeout = "0ms"
 
 [behavior.morse.profiles]

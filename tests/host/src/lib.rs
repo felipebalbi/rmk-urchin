@@ -17,6 +17,8 @@ mod runtime;
 mod screen;
 #[cfg(test)]
 mod transport_checks;
+#[cfg(test)]
+mod typing_checks;
 
 #[cfg(test)]
 mod tests {

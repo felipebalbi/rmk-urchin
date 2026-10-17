@@ -56,9 +56,24 @@ RMK 0.9.0, not a vendored or patched checkout. Coverage includes framebuffer
 rotation/framing, role-specific Bluetooth icons and advertising animation,
 panel refresh scheduling and recovery, DMA cancellation ordering, startup RMK
 events, local USB power indicators, and configured 5 ms debounce behavior.
+Representative six-key typing fixtures also load the project's morse settings
+through RMK's configuration resolver and exercise real tap/hold processing.
 `embedded-hal-mock` checks queued SPI/GPIO operations; stateful test doubles
 model pending transfers, power loss, injected failures, and elapsed time.
 
 They do not validate physical radio, GPIO, or display timing. The earlier spike's
 full key/chord scenarios require RMK's unpublished simulator and are not part
 of this suite.
+
+## Tap/hold tuning
+
+Native RMK flow-tap is enabled for home-row modifiers and thumb layer-taps.
+A tap/hold key pressed within 120 ms of a previously emitted simple key press
+acts as a tap, even if subsequently held. This favors letters, Tab, and
+Backspace during fast typing. For an intentional modifier or layer hold,
+pause for at least 120 ms after the previous simple key press, then hold the
+key for 200 ms (or use the existing home-row chord rules).
+
+This is not exact ZMK behavior: rolls starting after idle can still reorder
+keys. The native tuning does not change key mappings, combos, or quick-tap
+repeat behavior.

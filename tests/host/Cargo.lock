@@ -1942,6 +1942,8 @@ dependencies = [
  "futures",
  "heapless 0.9.3",
  "rmk",
+ "rmk-config",
+ "ssmarshal",
 ]
 
 [[package]]

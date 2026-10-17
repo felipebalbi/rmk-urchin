@@ -33,6 +33,39 @@ pub enum HostLink {
     Connected,
 }
 
+/// Enlarge the existing bitmap font fourfold without a second font asset.
+/// A profile uses at most three 5x8 characters, giving a 60x32 pixel number.
+struct ProfileTarget<'a, D> {
+    display: &'a mut D,
+    origin: Point,
+}
+
+impl<D> OriginDimensions for ProfileTarget<'_, D> {
+    fn size(&self) -> Size {
+        Size::new(15, 8)
+    }
+}
+
+impl<D: DrawTarget<Color = BinaryColor>> DrawTarget for ProfileTarget<'_, D> {
+    type Color = BinaryColor;
+    type Error = D::Error;
+
+    fn draw_iter<I: IntoIterator<Item = Pixel<BinaryColor>>>(
+        &mut self,
+        pixels: I,
+    ) -> Result<(), Self::Error> {
+        for Pixel(point, color) in pixels {
+            Rectangle::new(
+                self.origin + Point::new(point.x * 4, point.y * 4),
+                Size::new(4, 4),
+            )
+            .into_styled(PrimitiveStyle::with_fill(color))
+            .draw(self.display)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ScreenState {
     role: Role,
@@ -201,14 +234,16 @@ impl ScreenState {
             }
         }
         if self.role == Role::Central {
-            let mut profile: String<12> = String::new();
-            let _ = write!(profile, "Profile {}", self.profile);
-            Text::with_baseline(&profile, Point::new(3, 54), small, Baseline::Top).draw(display)?;
-        }
-        if self.role == Role::Central {
             Text::with_baseline("LAYER", Point::new(3, 104), small, Baseline::Top).draw(display)?;
             Text::with_baseline(&self.layer_text(), Point::new(3, 116), small, Baseline::Top)
                 .draw(display)?;
+            let mut profile: String<3> = String::new();
+            let _ = write!(profile, "{}", self.profile);
+            let mut target = ProfileTarget {
+                display,
+                origin: Point::new(65 - profile.len() as i32 * 20, 124),
+            };
+            Text::with_baseline(&profile, Point::zero(), small, Baseline::Top).draw(&mut target)?;
         }
         Ok(())
     }

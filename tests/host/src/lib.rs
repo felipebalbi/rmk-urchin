@@ -533,6 +533,58 @@ mod tests {
     }
 
     #[test]
+    fn central_profile_is_a_large_bottom_right_number_without_a_profile_label() {
+        let mut central = ScreenState::new(Role::Central);
+        let mut numbers = Vec::new();
+        let mut header = None;
+        for profile in 0..6 {
+            central.set_host(profile, HostLink::Connected);
+            let pixels = image(&central);
+            let number: Vec<_> = pixels.iter().copied().filter(|(_, y)| *y >= 124).collect();
+            assert!(!number.is_empty(), "profile must appear at the bottom");
+            let left = number.iter().map(|(x, _)| *x).min().unwrap();
+            let right = number.iter().map(|(x, _)| *x).max().unwrap();
+            let top = number.iter().map(|(_, y)| *y).min().unwrap();
+            let bottom = number.iter().map(|(_, y)| *y).max().unwrap();
+            assert!(
+                left >= 40 && (60..66).contains(&right),
+                "profile must be right aligned"
+            );
+            assert!(
+                right - left >= 11 && bottom - top >= 23,
+                "profile number must be large enough to read easily"
+            );
+            assert!(
+                (151..158).contains(&bottom),
+                "profile must sit near the bottom edge"
+            );
+            assert!(
+                !pixels.iter().any(|(_, y)| (54..62).contains(y)),
+                "remove the old Profile N line"
+            );
+            let upper: Vec<_> = pixels.into_iter().filter(|(_, y)| *y < 124).collect();
+            if let Some(header) = &header {
+                assert_eq!(&upper, header);
+            }
+            header = Some(upper);
+            assert!(
+                !numbers.contains(&number),
+                "profile digits must be distinguishable"
+            );
+            numbers.push(number);
+        }
+        // Even unexpected multi-digit values must stay in bounds and below the layer.
+        central.set_host(255, HostLink::Connected);
+        let _ = image(&central);
+        let mut peripheral = ScreenState::new(Role::Peripheral);
+        assert!(!peripheral.set_host(5, HostLink::Connected));
+        assert!(
+            !image(&peripheral).iter().any(|(_, y)| *y >= 124),
+            "the peripheral has no host profile"
+        );
+    }
+
+    #[test]
     fn bluetooth_icons_replace_link_text_on_both_roles_and_preserve_profiles() {
         let mut c = ScreenState::new(Role::Central);
         let mut p = ScreenState::new(Role::Peripheral);

@@ -36,6 +36,8 @@ RMK defaults to USB-priority mode if a USB cable is connected. After flashing, r
 Each half shows a horizontal battery icon with ten segments (one per complete
 10%), or a `?` when its battery level is unavailable. The bolt beside `BATTERY`
 indicates local USB power, not charging activity.
+The central half shows its zero-based Bluetooth profile number in large type at
+the bottom right; the peripheral does not show a host profile.
 
 Run `cargo make test`, or without cargo-make:
 

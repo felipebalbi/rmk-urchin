@@ -25,7 +25,7 @@ keys = """
 Q             W            E            R             T       Y       U                 I            O            P
 MT(A, LShift) MT(S, LAlt)  MT(D, LGui)  MT(F, LCtrl)  G       H       MT(J, RCtrl)      MT(K, RGui)  MT(L, RAlt)  MT(Semicolon, RShift)
 Z             X            C            V             B       N       M                 Comma        Dot          Slash
-_             _            _            LT(1, Tab)    Enter   Space   LT(2, Backspace)  _            _            _
+_             _            _            LT(1, Tab, THUMB) Enter   Space   LT(2, Backspace, THUMB) _         _            _
 """
 
 [[keymap.layer]]
@@ -34,26 +34,25 @@ keys = """
 WM(1, LShift) WM(2, LShift) WM(3, LShift) WM(4, LShift) WM(5, LShift) WM(6, LShift) WM(7, LShift) WM(8, LShift) WM(9, LShift) WM(0, LShift)
 1             2             3             4             5             6             7             8             9             0
 WM(1, LGui)   WM(2, LGui)   WM(3, LGui)   WM(4, LGui)   WM(5, LGui)   WM(6, LGui)   WM(7, LGui)   WM(8, LGui)   WM(9, LGui)   WM(0, LGui)
-_             _             _             -             -             -             -             _             _             _
+_             _             _             _             _             _             _             _             _             _
 """
 
 [[keymap.layer]]
 name = "Right"
 keys = """
 RightBracket WM(RightBracket, LShift) WM(0, LShift) WM(Dot, LShift)   PrintScreen Insert                 Home               PageUp             PageDown           End
-LeftBracket  WM(LeftBracket, LShift)  WM(9, LShift) WM(Comma, LShift) -           Delete                 Left               Up                 Down               Right
+LeftBracket  WM(LeftBracket, LShift)  WM(9, LShift) WM(Comma, LShift) _           Delete                 Left               Up                 Down               Right
 Grave        Minus                    Equal         Quote             Backslash   WM(Backslash, LShift)  WM(Quote, LShift)  WM(Equal, LShift)  WM(Minus, LShift)  WM(Grave, LShift)
-_            _                        _             -                 -           RCtrl                  -                  _                  _                  _
+_            _                        _             _                 _           RCtrl                  _                  _                  _                  _
 """
 
 [[keymap.layer]]
 name = "Tri"
-# The old Lock at (0,0) was unsupported in RMK 0.7; keep it inert for now.
 keys = """
-No    No     No  Reboot      User0  User3  F1  F2   F3   F4
-LAlt  LCtrl  No  Bootloader  User1  User4  F5  F6   F7   F8
-No    No     No  User9       User2  User5  F9  F10  F11  F12
-_     _      _   -           -      -      -   _    _    _
+WM(L, LGui | LCtrl) No     No  Reboot      User0  User3  F1  F2   F3   F4
+LAlt               LCtrl  No  Bootloader  User1  User4  F5  F6   F7   F8
+No                 No     No  User8       User2  User5  F9  F10  F11  F12
+_                  _      _   _           _      _      _   _    _    _
 """
 
 [rmk]
@@ -67,13 +66,31 @@ enabled = true
 tri_layer = { upper = 1, lower = 2, adjust = 3 }
 
 [behavior.morse]
-# RMK 0.7 gave permissive_hold precedence over hold_on_other_press.
+# Home-row mods: opposite-hand chords hold; same-hand rolls tap.
 permissive_hold = true
 unilateral_tap = true
-# Preserve the old enable_hrm default; prior_idle_time is inactive without it.
+# No typing-speed shortcut or tap-then-hold repeat, matching the ZMK config.
 enable_flow_tap = false
-prior_idle_time = "120ms"
-hold_timeout = "250ms"
+hold_timeout = "200ms"
+quick_tap_timeout = "0ms"
+
+[behavior.morse.profiles]
+# Thumb layer-taps use the same 200ms timeout, without home-row chord rules.
+THUMB = { normal_mode = true, unilateral_tap = false }
+
+[behavior.combo]
+timeout = "50ms"
+combos = [
+    # Both left thumbs: Escape.
+    { actions = ["LT(1, Tab, THUMB)", "Enter"], output = "Escape" },
+    # Both right thumbs: Delete.
+    { actions = ["Space", "LT(2, Backspace, THUMB)"], output = "Delete" },
+    # Inner thumbs: Caps Word.
+    { actions = ["Enter", "Space"], output = "CapsWordToggle" },
+    # The right layer (also inherited by Tri) replaces Space with RCtrl.
+    { actions = ["RCtrl", "LT(2, Backspace, THUMB)"], output = "Delete" },
+    { actions = ["Enter", "RCtrl"], output = "CapsWordToggle" },
+]
 
 [split]
 connection = "ble"

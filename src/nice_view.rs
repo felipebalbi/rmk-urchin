@@ -96,8 +96,8 @@ impl<CS: OutputPin<Error = Infallible>> Drop for Selected<'_, CS> {
 pub struct NiceView<SPI, CS, POWER, DELAY> {
     spi: SPI,
     cs: CS,
-    // nice!nano v2: retain the active-high external-supply enable driven high.
-    _power: POWER,
+    // nice!nano v2 external-supply enable: high while the panel is powered.
+    power: POWER,
     delay: DELAY,
     framebuffer: FrameBuffer,
     settled: bool,
@@ -116,7 +116,7 @@ where
         Self {
             spi,
             cs,
-            _power: power,
+            power,
             delay,
             framebuffer: FrameBuffer::new(),
             settled: false,
@@ -134,6 +134,25 @@ where
             self.delay.delay_ms(50).await;
             self.settled = true;
         }
+    }
+
+    pub async fn power_off(&mut self, high_polarity: bool) -> Result<(), SPI::Error> {
+        self.settle().await;
+        let result = self
+            .command(CLEAR | if high_polarity { VCOM } else { 0 })
+            .await;
+        let _ = self.cs.set_low();
+        // LD-29Y03 §6-2: clear memory, leave serial controls low, then wait T6.
+        self.delay.delay_us(30).await;
+        let _ = self.power.set_low();
+        self.settled = false;
+        result
+    }
+
+    pub fn power_on(&mut self) {
+        let _ = self.cs.set_low();
+        let _ = self.power.set_high();
+        self.settled = false;
     }
 
     pub async fn initialize(&mut self, high_polarity: bool) -> Result<(), SPI::Error> {

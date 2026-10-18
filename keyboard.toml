@@ -86,6 +86,12 @@ channel_size = 2
 pubs = 1
 subs = 2
 
+[event.sleep_state]
+# One local screen; RMK reserves split-link subscribers separately.
+channel_size = 1
+pubs = 1
+subs = 1
+
 [behavior]
 tri_layer = { upper = 1, lower = 2, adjust = 3 }
 

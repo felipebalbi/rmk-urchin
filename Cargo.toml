@@ -10,7 +10,7 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Upstream main as of 2026-10-17, pinned so firmware and host checks use the same code.
+# Upstream comparison reference; .cargo/config.toml selects the pinned buffered fork.
 rmk = { git = "https://github.com/rmk-rs/rmk.git", rev = "535cd7191338bd6fec656dfd4a4b36c1f159736d", default-features = false, features = [
     "nrf52840_ble",
     "split",
@@ -21,7 +21,6 @@ rmk = { git = "https://github.com/rmk-rs/rmk.git", rev = "535cd7191338bd6fec656d
     "vial",
     "host_lock",
     "watchdog",
-    "usb_log",
 ] }
 nrf-sdc = { version = "0.4.0", default-features = false, features = [
     "defmt",

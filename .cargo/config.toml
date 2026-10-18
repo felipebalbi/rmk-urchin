@@ -8,3 +8,8 @@ target = "thumbv7em-none-eabihf"
 [env]
 DEFMT_LOG = "info"
 KEYBOARD_TOML_PATH =  { value = "keyboard.toml", relative = true }
+
+# Firmware and native checks share the pushed buffered tap-hold revision.
+[patch."https://github.com/rmk-rs/rmk.git"]
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "5f0ab05292f6d757d25c0491071c6c8190318831" }
+rmk-config = { git = "https://github.com/felipebalbi/rmk.git", rev = "5f0ab05292f6d757d25c0491071c6c8190318831" }

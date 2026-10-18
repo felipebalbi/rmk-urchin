@@ -75,6 +75,7 @@ pub struct ScreenState {
     host: HostLink,
     central_connected: bool,
     layer: u8,
+    sleeping: bool,
 }
 
 impl ScreenState {
@@ -87,6 +88,7 @@ impl ScreenState {
             host: HostLink::Inactive,
             central_connected: false,
             layer: 0,
+            sleeping: false,
         }
     }
 
@@ -94,6 +96,12 @@ impl ScreenState {
         let value = percentage.map(|p| p.min(100));
         let changed = self.battery != value;
         self.battery = value;
+        changed
+    }
+
+    pub fn set_sleeping(&mut self, sleeping: bool) -> bool {
+        let changed = self.sleeping != sleeping;
+        self.sleeping = sleeping;
         changed
     }
 
@@ -291,6 +299,7 @@ pub struct Screen<SPI, CS, POWER, DELAY> {
     next_polarity: bool,
     last_image_us: Option<u64>,
     last_success: Option<(u64, bool)>,
+    powered: bool,
 }
 
 impl<SPI, CS, POWER, DELAY> Screen<SPI, CS, POWER, DELAY>
@@ -310,11 +319,39 @@ where
             next_polarity: false,
             last_image_us: None,
             last_success: None,
+            powered: true,
         }
     }
 
     pub fn state_mut(&mut self) -> &mut ScreenState {
         &mut self.state
+    }
+
+    pub fn is_sleeping(&self) -> bool {
+        self.state.sleeping
+    }
+
+    /// Apply the requested rail state only at a completed-transaction boundary.
+    pub async fn sync_power(&mut self) -> Result<bool, SPI::Error> {
+        if self.powered != self.state.sleeping {
+            return Ok(false);
+        }
+        let result = if self.state.sleeping {
+            let polarity = self.next_polarity;
+            self.next_polarity = !polarity;
+            self.panel.power_off(polarity).await
+        } else {
+            self.panel.power_on();
+            Ok(())
+        };
+        self.powered = !self.state.sleeping;
+        self.initialized = false;
+        self.rendered = None;
+        self.force_redraw = true;
+        self.next_polarity = false;
+        self.last_image_us = None;
+        self.last_success = None;
+        result.map(|()| true)
     }
 
     /// Last successfully completed transaction's start time and commanded
@@ -329,6 +366,10 @@ where
     }
 
     pub async fn tick(&mut self, now_us: u64) -> Result<(), SPI::Error> {
+        self.sync_power().await?;
+        if self.state.sleeping {
+            return Ok(());
+        }
         let polarity = self.next_polarity;
         // Even failed initialization attempts may have delivered the command.
         self.next_polarity = !polarity;

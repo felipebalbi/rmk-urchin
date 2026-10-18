@@ -52,7 +52,7 @@ from the repository root so `.cargo/config.toml` supplies the real
 host-only features and dependencies out of firmware builds.
 
 These checks compile the firmware's display modules directly and use the same
-selected RMK source as the firmware, including the local development override below.
+selected RMK source as the firmware, including the pinned fork override below.
 Coverage includes framebuffer
 rotation/framing, role-specific Bluetooth icons and advertising animation,
 panel refresh scheduling and recovery, DMA cancellation ordering, startup RMK
@@ -104,37 +104,48 @@ a degraded Backspace tap can delete text.
 
 This follows the selected ZMK home-row/thumb settings, not full ZMK parity. RMK
 still releases combo output on the last member and resolves events at or after
-the tapping deadline as timeouts. Mappings, pins, layers, thumb combos and display
-cadence are unchanged. The separately configured 30-second central idle timeout
-is preserved for idle/wake testing.
+the tapping deadline as timeouts. Mappings, pins, layers and thumb combos are
+unchanged. The configured central idle timeout is 30 seconds.
 
-## Development source and USB logging build
+## Screen sleep and wake
+
+Both screens consume RMK's sleep/wake events, including the existing split-link
+sleep notification. On sleep, a screen finishes any in-flight transaction, sends
+a final clear, and cuts its nice!nano v2 external 3.3V supply. Periodic display
+updates and maintenance stop while asleep. Status events still update RAM so
+battery, profile, layer and connection information is current after waking.
+
+On wake, the supply is enabled, the existing 50 ms settling interval is observed,
+and the panel is reinitialized and fully redrawn. The normal 16 ms awake cadence
+then resumes without replaying missed ticks. The nice!nano's switched supply may
+also power other external accessories; those lose power during screen sleep too.
+This is display power management, not MCU System OFF or a fix for active-display
+SPI power consumption.
+
+## Fork source and optional USB logging
 
 Firmware and host checks pin upstream `main` at
 [`535cd7191338bd6fec656dfd4a4b36c1f159736d`](https://github.com/rmk-rs/rmk/commit/535cd7191338bd6fec656dfd4a4b36c1f159736d)
 (2026-10-16; upstream HEAD checked on 2026-10-17) as a comparison reference.
-For this experiment, `.cargo/config.toml` patches that Git source to the sibling
-RMK fork at `../rmk/rmk` and `../rmk/rmk-config`. Firmware and host checks both
-enable `buffered_tap_hold` and resolve the same local checkout. This is a
-machine-local development override, not a published or pinned fork revision;
-do not commit it or treat the upstream SHA alone as the patched build identity.
-After a separately approved fork push, both manifests can use a specific fork SHA.
+`.cargo/config.toml` patches that Git source to the published buffered fork at
+[`5f0ab05292f6d757d25c0491071c6c8190318831`](https://github.com/felipebalbi/rmk/commit/5f0ab05292f6d757d25c0491071c6c8190318831).
+Firmware and host checks both enable `buffered_tap_hold` and resolve this exact
+revision. No sibling checkout is required, and the build does not follow a moving
+branch. The upstream SHA alone is the comparison identity, not the selected source.
 Compatibility updates move each half's battery ADC into its own `.battery` table,
 use bare processor registration, and clone the USB device configuration before
 giving the remaining configuration to BLE. Key mappings and the display's custom
-refresh loop are preserved; the selected tap/hold policy is described above.
+awake refresh cadence are preserved; the selected tap/hold policy is described above.
 
 **Storage warning:** RMK hashes its commit and Cargo features into its storage
 identity. A changed build can erase stored settings, host bonds and split peers,
 requiring re-pairing. Changing logging features can trigger another reset. With
 a matching schema, persisted profile settings still override compiled defaults.
 
-Both halves enable RMK's existing `usb_log` feature (USB CDC ACM serial), while
-retaining storage, Vial, host locking, and the watchdog. RMK's `defmt` feature is
-disabled; the application caps `log` output at **Debug** to include key-processing
-and tap/hold messages without Trace-level noise. `DEFMT_LOG` does not control the
-USB logger. RTT remains linked for panic reporting and defmt-only dependencies;
-these messages are **not** automatically forwarded to USB serial.
+USB CDC logging is currently **disabled** on both halves for power testing.
+USB keyboard/HID, Vial, storage, host locking and the watchdog remain enabled.
+RMK's `defmt` feature is disabled; RTT remains linked for panic reporting and
+defmt-only dependencies. No serial logger is exposed by the normal build.
 
 Build and flash both halves using the normal UF2 procedure:
 
@@ -143,7 +154,14 @@ cargo make test
 cargo make uf2 --release
 ```
 
-After flashing, connect the **central** half using a USB data cable. Find its
+### Temporarily enable USB logs
+
+For debugging, add `"usb_log"` back to the RMK dependency's feature list in
+`Cargo.toml`, then rebuild with the same UF2 command. The retained application
+`log` configuration caps output at Debug; `DEFMT_LOG` does not control this logger.
+Changing the RMK feature set may reset storage and require re-pairing again.
+
+After flashing that logging-enabled build, connect the **central** half using a USB data cable. Find its
 serial device with `ls -l /dev/serial/by-id/` (usually `/dev/ttyACM0`). If both
 halves are connected, identify each port separately; they produce separate logs.
 Open a serial monitor at 115200 baud, or capture directly on Linux:
@@ -180,7 +198,7 @@ typing with a short, non-sensitive sequence:
 - All Escape/Delete/Caps Word thumb combinations and both-thumb tri-layer access.
 - Idle for more than 30 seconds, then check wake and split reconnection separately.
 
-First retain USB logging for diagnosis. Then compare a build without logging
-before attributing timing changes solely to buffering; re-pairing may be required
-again after changing features. Native tests and valid UF2 files do not replace
-this physical comparison.
+USB logging is off in the selected build. If it is temporarily enabled for a
+short diagnosis, compare again without it before attributing timing changes
+solely to buffering. Native tests and valid UF2 files do not replace physical
+typing, screen power, wake and radio checks.

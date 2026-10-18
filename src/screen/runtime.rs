@@ -10,7 +10,7 @@ use rmk::{
     core_traits::Runnable,
     event::{
         BatteryStatusEvent, CentralConnectedEvent, ConnectionStatusChangeEvent, EventSubscriber,
-        LayerChangeEvent, SubscribableEvent,
+        LayerChangeEvent, SleepStateEvent, SubscribableEvent,
     },
     processor::{PollingProcessor, Processor},
     types::{battery::BatteryStatus, ble::BleState},
@@ -26,6 +26,7 @@ pub enum ScreenEvent {
     Host(ConnectionStatusChangeEvent),
     Layer(LayerChangeEvent),
     Central(CentralConnectedEvent),
+    Sleep(SleepStateEvent),
 }
 
 impl ScreenEvent {
@@ -51,6 +52,9 @@ impl ScreenEvent {
             Self::Central(event) => {
                 state.set_central_connected(event.connected);
             }
+            Self::Sleep(event) => {
+                state.set_sleeping(event.0);
+            }
         }
     }
 }
@@ -60,10 +64,12 @@ pub enum Subscriptions {
         battery: <BatteryStatusEvent as SubscribableEvent>::Subscriber,
         host: <ConnectionStatusChangeEvent as SubscribableEvent>::Subscriber,
         layer: <LayerChangeEvent as SubscribableEvent>::Subscriber,
+        sleep: <SleepStateEvent as SubscribableEvent>::Subscriber,
     },
     Peripheral {
         battery: <BatteryStatusEvent as SubscribableEvent>::Subscriber,
         central: <CentralConnectedEvent as SubscribableEvent>::Subscriber,
+        sleep: <SleepStateEvent as SubscribableEvent>::Subscriber,
     },
 }
 
@@ -74,10 +80,12 @@ impl Subscriptions {
                 battery: BatteryStatusEvent::subscriber(),
                 host: ConnectionStatusChangeEvent::subscriber(),
                 layer: LayerChangeEvent::subscriber(),
+                sleep: SleepStateEvent::subscriber(),
             },
             Role::Peripheral => Self::Peripheral {
                 battery: BatteryStatusEvent::subscriber(),
                 central: CentralConnectedEvent::subscriber(),
+                sleep: SleepStateEvent::subscriber(),
             },
         }
     }
@@ -90,7 +98,11 @@ impl Subscriptions {
                 battery,
                 host,
                 layer,
+                sleep,
             } => {
+                while let Some(event) = sleep.try_next_message_pure() {
+                    ScreenEvent::Sleep(event).apply(state);
+                }
                 while let Some(event) = battery.try_next_message_pure() {
                     ScreenEvent::Battery(event).apply(state);
                 }
@@ -101,7 +113,14 @@ impl Subscriptions {
                     ScreenEvent::Layer(event).apply(state);
                 }
             }
-            Self::Peripheral { battery, central } => {
+            Self::Peripheral {
+                battery,
+                central,
+                sleep,
+            } => {
+                while let Some(event) = sleep.try_next_message_pure() {
+                    ScreenEvent::Sleep(event).apply(state);
+                }
                 while let Some(event) = battery.try_next_message_pure() {
                     ScreenEvent::Battery(event).apply(state);
                 }
@@ -122,15 +141,32 @@ impl EventSubscriber for Subscriptions {
                 battery,
                 host,
                 layer,
-            } => match select3(battery.next_event(), host.next_event(), layer.next_event()).await {
-                Either3::First(event) => ScreenEvent::Battery(event),
-                Either3::Second(event) => ScreenEvent::Host(event),
-                Either3::Third(event) => ScreenEvent::Layer(event),
+                sleep,
+            } => match select(
+                sleep.next_event(),
+                select3(battery.next_event(), host.next_event(), layer.next_event()),
+            )
+            .await
+            {
+                Either::First(event) => ScreenEvent::Sleep(event),
+                Either::Second(Either3::First(event)) => ScreenEvent::Battery(event),
+                Either::Second(Either3::Second(event)) => ScreenEvent::Host(event),
+                Either::Second(Either3::Third(event)) => ScreenEvent::Layer(event),
             },
-            Self::Peripheral { battery, central } => {
-                match select(battery.next_event(), central.next_event()).await {
-                    Either::First(event) => ScreenEvent::Battery(event),
-                    Either::Second(event) => ScreenEvent::Central(event),
+            Self::Peripheral {
+                battery,
+                central,
+                sleep,
+            } => {
+                match select(
+                    sleep.next_event(),
+                    select(battery.next_event(), central.next_event()),
+                )
+                .await
+                {
+                    Either::First(event) => ScreenEvent::Sleep(event),
+                    Either::Second(Either::First(event)) => ScreenEvent::Battery(event),
+                    Either::Second(Either::Second(event)) => ScreenEvent::Central(event),
                 }
             }
         }
@@ -252,7 +288,15 @@ where
             .set_usb_powered((self.usb_power_present)());
         self.subscriptions.drain_into(self.screen.state_mut());
         let previous_success = self.screen.last_success();
-        match self.screen.tick(Instant::now().as_micros()).await {
+        let result = match self.screen.sync_power().await {
+            Err(error) => Err(error),
+            Ok(_) if self.screen.is_sleeping() => return,
+            Ok(_) => {
+                self.screen.settle().await;
+                self.screen.tick(Instant::now().as_micros()).await
+            }
+        };
+        match result {
             Ok(()) => {
                 if self.failed {
                     let gap_us = previous_success
@@ -279,10 +323,38 @@ where
         self.screen.settle().await;
         let mut cadence = PanelCadence::new(Instant::now().as_micros());
         loop {
-            Timer::at(Instant::from_micros(cadence.deadline_us())).await;
-            let started = Instant::now().as_micros();
-            self.update().await;
-            cadence.completed(started, Instant::now().as_micros());
+            self.subscriptions.drain_into(self.screen.state_mut());
+            match self.screen.sync_power().await {
+                Ok(true) if !self.screen.is_sleeping() => {
+                    self.screen.settle().await;
+                    cadence = PanelCadence::new(Instant::now().as_micros());
+                }
+                Err(_) => {
+                    log::warn!("nice!view shutdown clear failed; supply disabled");
+                    self.failed = true;
+                }
+                _ => {}
+            }
+            if self.screen.is_sleeping() {
+                let event = self.subscriptions.next_event().await;
+                event.apply(self.screen.state_mut());
+                continue;
+            }
+            if Instant::now().as_micros() >= cadence.deadline_us() {
+                let started = Instant::now().as_micros();
+                self.update().await;
+                cadence.completed(started, Instant::now().as_micros());
+                continue;
+            }
+            match select(
+                self.subscriptions.next_event(),
+                Timer::at(Instant::from_micros(cadence.deadline_us())),
+            )
+            .await
+            {
+                Either::First(event) => event.apply(self.screen.state_mut()),
+                Either::Second(()) => {}
+            }
         }
     }
 }

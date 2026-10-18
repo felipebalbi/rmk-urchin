@@ -16,6 +16,8 @@ mod runtime;
 #[path = "../../../src/screen.rs"]
 mod screen;
 #[cfg(test)]
+mod sleep_checks;
+#[cfg(test)]
 mod transport_checks;
 #[cfg(test)]
 mod typing_checks;
@@ -110,6 +112,7 @@ mod tests {
         pub writes: Vec<Vec<u8>>,
         pub accepted: Vec<Vec<u8>>,
         pub power_levels: Vec<bool>,
+        pub power_edges: Vec<(bool, u64, bool)>,
         pub edges: Vec<bool>,
         pub calls: usize,
         pub fail: Option<usize>,
@@ -196,15 +199,17 @@ mod tests {
     impl Pin {
         fn set(&mut self, high: bool) {
             let mut t = self.0.borrow_mut();
+            let now = if t.mock_clock {
+                embassy_time::Instant::now().as_micros()
+            } else {
+                t.now_us
+            };
             if self.1 {
                 t.power = high;
                 t.power_levels.push(high);
+                let selected = t.cs;
+                t.power_edges.push((high, now, selected));
             } else {
-                let now = if t.mock_clock {
-                    embassy_time::Instant::now().as_micros()
-                } else {
-                    t.now_us
-                };
                 if high {
                     t.transaction_starts.push(now);
                 } else if t.cs {

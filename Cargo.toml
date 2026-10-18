@@ -10,11 +10,18 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-rmk = { version = "0.9.0", features = [
+# Upstream main as of 2026-10-17, pinned so firmware and host checks use the same code.
+rmk = { git = "https://github.com/rmk-rs/rmk.git", rev = "535cd7191338bd6fec656dfd4a4b36c1f159736d", default-features = false, features = [
     "nrf52840_ble",
     "split",
     "async_matrix",
+    "buffered_tap_hold",
     "adafruit_bl",
+    "storage",
+    "vial",
+    "host_lock",
+    "watchdog",
+    "usb_log",
 ] }
 nrf-sdc = { version = "0.4.0", default-features = false, features = [
     "defmt",
@@ -46,9 +53,11 @@ embassy-executor = { version = "0.10", features = [
     "platform-cortex-m",
     "executor-thread",
 ] }
+# RMK's generated startup imports and panic-probe still use RTT for panic output.
 defmt = "1.0"
 defmt-rtt = "1.0"
 panic-probe = { version = "1.0", features = ["print-defmt"] }
+log = { version = "0.4", default-features = false, features = ["max_level_debug"] }
 static_cell = "2"
 embedded-graphics = "0.8.2"
 embedded-hal = "1"

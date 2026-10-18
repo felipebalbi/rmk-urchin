@@ -15,7 +15,7 @@ embassy_nrf::bind_interrupts!(struct DisplayIrqs {
 
 #[rmk_central]
 mod keybaord_central {
-    #[register_processor(poll)]
+    #[register_processor]
     fn status_screen() -> impl rmk::processor::PollingProcessor {
         use crate::screen::runtime::{Central, ScreenProcessor};
         use embassy_nrf::{
@@ -47,8 +47,9 @@ mod keybaord_central {
     fn run_with_initial_screen_state() {
         status_screen.seed_from_keymap(&keymap);
         let mut wpm_processor = rmk::processor::builtin::wpm::WpmProcessor::new();
-        let mut usb_transport = rmk::usb::UsbTransport::new(driver, rmk_config.device_config)
-            .with_host_service(&host_service);
+        let mut usb_transport =
+            rmk::usb::UsbTransport::new(driver, rmk_config.device_config.clone())
+                .with_host_service(&host_service);
         let mut ble_transport = rmk::ble::BleTransport::new(
             ble_controller,
             ble_addr,

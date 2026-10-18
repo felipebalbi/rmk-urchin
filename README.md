@@ -51,8 +51,9 @@ from the repository root so `.cargo/config.toml` supplies the real
 `keyboard.toml` to RMK's configuration build. The separate test crate keeps
 host-only features and dependencies out of firmware builds.
 
-These checks compile the firmware's display modules directly and use published
-RMK 0.9.0, not a vendored or patched checkout. Coverage includes framebuffer
+These checks compile the firmware's display modules directly and use the same
+selected RMK source as the firmware, including the local development override below.
+Coverage includes framebuffer
 rotation/framing, role-specific Bluetooth icons and advertising animation,
 panel refresh scheduling and recovery, DMA cancellation ordering, startup RMK
 events, local USB power indicators, and configured 5 ms debounce behavior.
@@ -65,15 +66,121 @@ They do not validate physical radio, GPIO, or display timing. The earlier spike'
 full key/chord scenarios require RMK's unpublished simulator and are not part
 of this suite.
 
+### Desired-behavior regressions
+
+Two ordinary tests in `tests/host/src/typing_checks.rs` pin the desired behavior
+that failed against the upstream comparison build and its flow-tap policy:
+
+- `capital_i_after_space_does_not_emit_a_from_the_shift_key` replays the captured
+  Space / A-Shift / I timing and expects Space followed by shifted I, without A.
+- `early_right_thumb_quote_chord_does_not_emit_base_layer_m` expects the M position
+  to produce shifted Quote when chorded with the held Right thumb before its
+  timeout. This is a representative reproduction of the reported quote failure,
+  using timing from the captured thumb/base-key sequence, not an exact quote trace.
+
+Controls cover capital I after idle and Quote after the thumb hold timeout. The
+two tests specifically pinning forced flow-tap remain under an explicit legacy
+policy fixture, with their original assertions. No reproducer is ignored or
+marked as an expected panic. These are representative native checks, not proof
+of physical typing or radio behavior.
+
 ## Tap/hold tuning
 
-Native RMK flow-tap is enabled for home-row modifiers and thumb layer-taps.
-A tap/hold key pressed within 120 ms of a previously emitted simple key press
-acts as a tap, even if subsequently held. This favors letters, Tab, and
-Backspace during fast typing. For an intentional modifier or layer hold,
-pause for at least 120 ms after the previous simple key press, then hold the
-key for 200 ms (or use the existing home-row chord rules).
+Urchin opts into RMK's experimental `buffered_tap_hold` feature and profile flag.
+Flow-tap is **disabled**; its retained 120 ms prior-idle setting is inactive.
+Home-row modifiers use 200 ms permissive hold and release-based hand filtering:
+an opposite-hand nested release holds, a same-hand nested release taps, and a
+same-hand press alone can still hold through the term. Thumb layer-taps use
+Normal mode without unilateral filtering, inheriting buffering and the 200 ms term.
+Quick-tap repeat remains explicitly disabled.
 
-This is not exact ZMK behavior: rolls starting after idle can still reorder
-keys. The native tuning does not change key mappings, combos, or quick-tap
-repeat behavior.
+Following presses and releases wait behind an undecided tap/hold. The owner
+commits first, then captured keys execute on the selected layer with their original
+logical times. Expect bounded decision latency, commonly up to the 200 ms term;
+full Morse/tap-dance owners remain legacy. The 32-event FIFO degrades oldest owners
+to taps under exhaustion, and legacy ownership exhaustion can degrade a fresh
+press to a balanced tap. This avoids stuck actions, not incorrect typing intent:
+a degraded Backspace tap can delete text.
+
+This follows the selected ZMK home-row/thumb settings, not full ZMK parity. RMK
+still releases combo output on the last member and resolves events at or after
+the tapping deadline as timeouts. Mappings, pins, layers, thumb combos and display
+cadence are unchanged. The separately configured 30-second central idle timeout
+is preserved for idle/wake testing.
+
+## Development source and USB logging build
+
+Firmware and host checks pin upstream `main` at
+[`535cd7191338bd6fec656dfd4a4b36c1f159736d`](https://github.com/rmk-rs/rmk/commit/535cd7191338bd6fec656dfd4a4b36c1f159736d)
+(2026-10-16; upstream HEAD checked on 2026-10-17) as a comparison reference.
+For this experiment, `.cargo/config.toml` patches that Git source to the sibling
+RMK fork at `../rmk/rmk` and `../rmk/rmk-config`. Firmware and host checks both
+enable `buffered_tap_hold` and resolve the same local checkout. This is a
+machine-local development override, not a published or pinned fork revision;
+do not commit it or treat the upstream SHA alone as the patched build identity.
+After a separately approved fork push, both manifests can use a specific fork SHA.
+Compatibility updates move each half's battery ADC into its own `.battery` table,
+use bare processor registration, and clone the USB device configuration before
+giving the remaining configuration to BLE. Key mappings and the display's custom
+refresh loop are preserved; the selected tap/hold policy is described above.
+
+**Storage warning:** RMK hashes its commit and Cargo features into its storage
+identity. A changed build can erase stored settings, host bonds and split peers,
+requiring re-pairing. Changing logging features can trigger another reset. With
+a matching schema, persisted profile settings still override compiled defaults.
+
+Both halves enable RMK's existing `usb_log` feature (USB CDC ACM serial), while
+retaining storage, Vial, host locking, and the watchdog. RMK's `defmt` feature is
+disabled; the application caps `log` output at **Debug** to include key-processing
+and tap/hold messages without Trace-level noise. `DEFMT_LOG` does not control the
+USB logger. RTT remains linked for panic reporting and defmt-only dependencies;
+these messages are **not** automatically forwarded to USB serial.
+
+Build and flash both halves using the normal UF2 procedure:
+
+```sh
+cargo make test
+cargo make uf2 --release
+```
+
+After flashing, connect the **central** half using a USB data cable. Find its
+serial device with `ls -l /dev/serial/by-id/` (usually `/dev/ttyACM0`). If both
+halves are connected, identify each port separately; they produce separate logs.
+Open a serial monitor at 115200 baud, or capture directly on Linux:
+
+```sh
+umask 077
+stty -F /dev/ttyACM0 115200 raw -echo
+cat /dev/ttyACM0 | tee /tmp/opencode/urchin-central-usb.log
+```
+
+Replace the port as needed, type a short non-sensitive reproduction, and press
+Ctrl-C to stop capture. If access is denied, use your system's serial-port access
+policy or run the serial-reader commands with the necessary privilege; do not make
+all device nodes world-readable. Logs can contain key positions and actions, so
+review them before sharing.
+
+The upstream logger formats lines as `[<uptime>ms <level>] <message>`. Logs before
+the logger/USB connection is available may be absent; this is a bounded text
+logger, not a loss-accounted telemetry stream. USB attachment keeps RMK's existing
+USB/BLE output selection behavior, and logging can affect timing. First establish
+that the port emits messages, then compare slow typing with the fast rolls that
+misbehave. No custom HID telemetry is enabled in this build.
+
+### Hardware comparison
+
+Keep the previous upstream images separately, and flash matching central and
+peripheral images yourself using the UF2 procedure above. Compare slow and normal
+typing with a short, non-sensitive sequence:
+
+- Space followed by an intentional capital I: no extra A.
+- Early and late Right-thumb quotes at the M position: shifted Quote, not M.
+- Two/three-letter rolls, especially ASQ, and ordinary Tab/Backspace taps.
+- Opposite-hand modifiers, same-hand rolls and deliberately held same-hand chords.
+- All Escape/Delete/Caps Word thumb combinations and both-thumb tri-layer access.
+- Idle for more than 30 seconds, then check wake and split reconnection separately.
+
+First retain USB logging for diagnosis. Then compare a build without logging
+before attributing timing changes solely to buffering; re-pairing may be required
+again after changing features. Native tests and valid UF2 files do not replace
+this physical comparison.

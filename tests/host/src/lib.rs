@@ -1,4 +1,4 @@
-//! Host checks compile the actual firmware modules against crates.io RMK.
+//! Host checks compile the actual firmware modules against the pinned upstream RMK.
 
 #![cfg(test)]
 

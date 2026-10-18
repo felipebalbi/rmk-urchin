@@ -15,7 +15,7 @@ embassy_nrf::bind_interrupts!(struct DisplayIrqs {
 
 #[rmk_peripheral(id = 0)]
 mod keyboard_peripheral {
-    #[register_processor(poll)]
+    #[register_processor]
     fn status_screen() -> impl rmk::processor::PollingProcessor {
         use crate::screen::runtime::{Peripheral, ScreenProcessor};
         use embassy_nrf::{

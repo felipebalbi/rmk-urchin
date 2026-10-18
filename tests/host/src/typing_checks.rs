@@ -1,8 +1,8 @@
-//! Representative tap/hold keys driven through published RMK's real engine.
+//! Representative tap/hold keys driven through the selected RMK engine.
 //! Read the project's actual morse settings with RMK's configuration resolver;
-//! only the six-key fixture and clock/host transport are test-specific. This is
+//! only the representative key fixture and clock/host transport are test-specific. This is
 //! not the upstream full-keyboard simulator and does not exercise thumb combos.
-use embassy_time::{Duration, MockDriver, Timer};
+use embassy_time::{Duration, Instant, MockDriver, Timer};
 use rmk::{
     config::{BehaviorConfig, Hand, PositionalConfig},
     core_traits::Runnable,
@@ -39,6 +39,7 @@ fn profile(p: &rmk_config::resolved::behavior::MorseProfile) -> MorseProfile {
         p.gap_timeout_ms.map(|t| t.try_into().unwrap()),
     )
     .with_enable_flow_tap(p.enable_flow_tap)
+    .with_buffered_tap_hold(p.buffered_tap_hold)
     .with_quick_tap_timeout_ms(p.quick_tap_timeout_ms.map(|t| t.try_into().unwrap()))
 }
 
@@ -72,6 +73,7 @@ fn configured_behavior() -> (BehaviorConfig, u8) {
 struct Trace {
     held: [u8; 6],
     presses: Vec<K>,
+    key_downs: Vec<(K, u8)>,
     modifiers: Vec<u8>,
     layers: Vec<u8>,
 }
@@ -91,6 +93,7 @@ fn drive<F: Future>(future: F, trace: &mut Trace) -> F::Output {
             for key in report.keycodes {
                 if key != 0 && !trace.held.contains(&key) {
                     trace.presses.push(K::from(key));
+                    trace.key_downs.push((K::from(key), report.modifier));
                 }
             }
             trace.held = report.keycodes;
@@ -108,17 +111,41 @@ enum Step {
     Down(u8),
     Up(u8),
     Wait(u64),
+    /// Absolute milliseconds since the sequence starts, without Down/Up's 30ms gap.
+    At(u64, u8, bool),
 }
-use Step::{Down, Up, Wait};
+use Step::{At, Down, Up, Wait};
+
+#[derive(Clone, Copy)]
+enum Policy {
+    Configured,
+    LegacyFlowTap,
+}
 
 fn sequence(prior_gap_ms: Option<u64>, steps: &[Step]) -> Trace {
+    sequence_for(Policy::Configured, prior_gap_ms, steps)
+}
+
+fn sequence_for(policy: Policy, prior_gap_ms: Option<u64>, steps: &[Step]) -> Trace {
     let _lock = crate::tests::EVENT_LOCK.lock().unwrap();
     MockDriver::get().reset();
     rmk::state::set_usb_state(rmk::types::connection::UsbState::Configured);
     rmk::channel::USB_REPORT_CHANNEL.clear();
     let (mut behavior, thumb) = configured_behavior();
+    if matches!(policy, Policy::LegacyFlowTap) {
+        behavior.morse.enable_flow_tap = true;
+        behavior.morse.default_profile = behavior
+            .morse
+            .default_profile
+            .with_enable_flow_tap(Some(true))
+            .with_buffered_tap_hold(Some(false));
+        for profile in &mut behavior.morse.profiles {
+            *profile = profile.with_buffered_tap_hold(Some(false));
+        }
+    }
     let key = |k| Action::Key(KeyCode::Hid(k));
-    // A/Shift, S/Alt, Q, H, Tab/layer 1, Backspace/layer 2.
+    // 0=A/Shift, 1=S/Alt, 2=Q, 3=H, 4=Tab/layer 1,
+    // 5=Backspace/layer 2, 6=I, 7=Space, 8=M (double-quote on layer 2).
     // Index 255 selects the global profile (outside the named-profile table).
     let base = [[
         KeyAction::TapHold(
@@ -131,18 +158,25 @@ fn sequence(prior_gap_ms: Option<u64>, steps: &[Step]) -> Trace {
         KeyAction::Single(key(K::H)),
         KeyAction::TapHold(key(K::Tab), Action::LayerOn(1), thumb),
         KeyAction::TapHold(key(K::Backspace), Action::LayerOn(2), thumb),
+        KeyAction::Single(key(K::I)),
+        KeyAction::Single(key(K::Space)),
+        KeyAction::Single(key(K::M)),
     ]];
-    let mut data = KeymapData::new([
-        base,
-        [[KeyAction::Transparent; 6]],
-        [[KeyAction::Transparent; 6]],
-    ]);
+    let mut right = [[KeyAction::Transparent; 9]];
+    right[0][8] = KeyAction::Single(Action::KeyWithModifier(
+        K::Quote,
+        ModifierCombination::LSHIFT,
+    ));
+    let mut data = KeymapData::new([base, [[KeyAction::Transparent; 9]], right]);
     let positions = PositionalConfig::new([[
         Hand::Left,
         Hand::Left,
         Hand::Left,
         Hand::Right,
         Hand::Left,
+        Hand::Right,
+        Hand::Right,
+        Hand::Right,
         Hand::Right,
     ]]);
     let mut trace = Trace::default();
@@ -167,6 +201,7 @@ fn sequence(prior_gap_ms: Option<u64>, steps: &[Step]) -> Trace {
         MockDriver::get().advance(Duration::from_millis(gap));
         trace = Trace::default();
     }
+    let started = Instant::now();
     for step in steps {
         match *step {
             Down(col) | Up(col) => {
@@ -183,6 +218,18 @@ fn sequence(prior_gap_ms: Option<u64>, steps: &[Step]) -> Trace {
                         keyboard.run(),
                         Timer::after(Duration::from_millis(ms)),
                     ),
+                    &mut trace,
+                );
+            }
+            At(ms, col, pressed) => {
+                let deadline = started + Duration::from_millis(ms);
+                assert!(Instant::now() <= deadline, "input timeline ran past {ms}ms");
+                drive(
+                    embassy_futures::select::select(keyboard.run(), Timer::at(deadline)),
+                    &mut trace,
+                );
+                drive(
+                    keyboard.process_inner(KeyboardEvent::key(0, col, pressed)),
                     &mut trace,
                 );
             }
@@ -212,7 +259,11 @@ fn thumb_rolls_during_typing_emit_tab_or_backspace_before_the_next_letter() {
 
 #[test]
 fn nested_opposite_hand_key_during_typing_does_not_turn_a_into_shift() {
-    let trace = sequence(Some(30), &[Down(0), Down(3), Up(3), Up(0)]);
+    let trace = sequence_for(
+        Policy::LegacyFlowTap,
+        Some(30),
+        &[Down(0), Down(3), Up(3), Up(0)],
+    );
     assert_eq!(trace.presses, [K::A, K::H]);
     assert!(trace.modifiers.iter().all(|m| *m == 0));
     assert_eq!(trace.held, [0; 6]);
@@ -244,9 +295,104 @@ fn deliberate_thumb_layer_holds_still_work_after_a_typing_pause() {
 #[test]
 fn thumb_started_during_typing_stays_a_tap_even_if_held_past_the_timeout() {
     for (thumb, tap) in [(4, K::Tab), (5, K::Backspace)] {
-        let trace = sequence(Some(30), &[Down(thumb), Wait(250), Up(thumb)]);
+        let trace = sequence_for(
+            Policy::LegacyFlowTap,
+            Some(30),
+            &[Down(thumb), Wait(250), Up(thumb)],
+        );
         assert_eq!(trace.presses, [tap]);
         assert!(trace.layers.iter().all(|layer| *layer == 0));
         assert_eq!(trace.held, [0; 6]);
     }
+}
+
+#[test]
+fn capital_i_after_space_does_not_emit_a_from_the_shift_key() {
+    // USB capture at 229899-230267ms: Space, A/Shift 119ms later, I another
+    // 97ms later. A/Shift stays down for 246ms but flow-tap sends unshifted AI.
+    let trace = sequence(
+        None,
+        &[
+            At(0, 7, true),
+            At(76, 7, false),
+            At(119, 0, true),
+            At(216, 6, true),
+            At(269, 6, false),
+            At(365, 0, false),
+        ],
+    );
+    assert_eq!(
+        trace.presses,
+        [K::Space, K::I],
+        "holding A/Shift to capitalize I must not insert A"
+    );
+    assert_eq!(
+        trace.key_downs,
+        [(K::Space, 0), (K::I, 2)],
+        "I must be emitted with left Shift, not as lowercase i"
+    );
+    assert_eq!(trace.held, [0; 6]);
+    assert_eq!(trace.modifiers.last(), Some(&0));
+}
+
+#[test]
+fn capital_i_after_idle_has_shift_without_inserting_a() {
+    let trace = sequence(
+        None,
+        &[
+            At(0, 0, true),
+            At(97, 6, true),
+            At(150, 6, false),
+            At(246, 0, false),
+        ],
+    );
+    assert_eq!(trace.key_downs, [(K::I, 2)]);
+    assert_eq!(trace.held, [0; 6]);
+    assert_eq!(trace.modifiers.last(), Some(&0));
+}
+
+#[test]
+fn early_right_thumb_quote_chord_does_not_emit_base_layer_m() {
+    // The log's 253725-254010ms thumb/R sequence emits a base key at +89ms,
+    // before layer 2 activates at +201ms. This uses that timing with the M/quote
+    // position from the user's report; the exact failed quote was not captured.
+    let trace = sequence(
+        None,
+        &[
+            At(0, 5, true),
+            At(89, 8, true),
+            At(167, 8, false),
+            At(285, 5, false),
+        ],
+    );
+    assert_eq!(
+        trace.presses,
+        [K::Quote],
+        "a key chorded with the held Right thumb must use its layer, not emit M"
+    );
+    assert_eq!(
+        trace.key_downs,
+        [(K::Quote, 2)],
+        "double-quote requires Shift+Quote"
+    );
+    assert_eq!(trace.held, [0; 6]);
+    assert_eq!(trace.modifiers.last(), Some(&0));
+    assert_eq!(trace.layers.last(), Some(&0));
+}
+
+#[test]
+fn right_thumb_quote_after_hold_timeout_uses_shifted_quote() {
+    let trace = sequence(
+        None,
+        &[
+            At(0, 5, true),
+            At(210, 8, true),
+            At(280, 8, false),
+            At(330, 5, false),
+        ],
+    );
+    assert_eq!(trace.key_downs, [(K::Quote, 2)]);
+    assert_eq!(trace.held, [0; 6]);
+    assert_eq!(trace.modifiers.last(), Some(&0));
+    assert_eq!(trace.layers.last(), Some(&0));
 }

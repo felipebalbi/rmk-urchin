@@ -257,7 +257,7 @@ where
                 if self.failed {
                     let gap_us = previous_success
                         .map(|(at, _)| Instant::now().as_micros().saturating_sub(at));
-                    defmt::info!(
+                    log::info!(
                         "nice!view SPI recovered; gap since prior success (us): {:?}",
                         gap_us
                     );
@@ -266,7 +266,7 @@ where
             }
             Err(_) => {
                 if !self.failed {
-                    defmt::warn!("nice!view SPI failed; retaining redraw and retrying");
+                    log::warn!("nice!view SPI failed; retaining redraw and retrying");
                 }
                 self.failed = true;
             }

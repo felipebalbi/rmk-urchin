@@ -60,6 +60,8 @@ _                  _      _   _           _      _      _   _    _    _
 debounce_time = 5
 # The number of available BLE profiles
 ble_profiles_num = 6
+# enable sleep
+split_central_sleep_timeout_seconds = 30
 
 [ble]
 enabled = true
@@ -91,10 +93,10 @@ tri_layer = { upper = 1, lower = 2, adjust = 3 }
 # Home-row mods: opposite-hand chords hold; same-hand rolls tap.
 permissive_hold = true
 unilateral_tap = true
-# Native RMK fast-typing guard: favor taps within 120ms of a simple key press.
-# Pause briefly before an intentional modifier/layer hold. This also applies
-# to THUMB via inheritance; it is a workaround, not exact ZMK event ordering.
-enable_flow_tap = true
+# Retain following presses/releases until the home-row or thumb owner decides.
+buffered_tap_hold = true
+enable_flow_tap = false
+# Inactive while flow-tap is disabled; retained for the legacy-policy comparison.
 prior_idle_time = "120ms"
 hold_timeout = "200ms"
 # Keep tap-then-hold repeat disabled.
@@ -122,11 +124,13 @@ combos = [
 connection = "ble"
 
 [split.central]
-battery_adc_pin = "vddh"
 rows = 4
 cols = 5
 row_offset = 0
 col_offset = 0
+
+[split.central.battery]
+battery_adc_pin = "vddh"
 
 [split.central.matrix]
 row2col = false
@@ -134,11 +138,13 @@ row_pins = ["P1_00", "P0_11", "P1_04", "P1_06"]
 col_pins = ["P1_15", "P1_13", "P1_11", "P0_10", "P0_09"]
 
 [[split.peripheral]]
-battery_adc_pin = "vddh"
 rows = 4
 cols = 5
 row_offset = 0
 col_offset = 5
+
+[split.peripheral.battery]
+battery_adc_pin = "vddh"
 
 [split.peripheral.matrix]
 row2col = false

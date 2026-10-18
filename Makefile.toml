@@ -1,6 +1,6 @@
 [tasks.test]
 clear = true
-description = "Run native firmware checks against published RMK (no hardware needed)"
+description = "Run native firmware checks against the selected RMK source (no hardware needed)"
 script = '''
 host=$(rustc -vV | sed -n 's/^host: //p')
 cargo test --manifest-path tests/host/Cargo.toml --target "$host" --locked

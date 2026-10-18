@@ -2,7 +2,7 @@
 
 use core::{convert::Infallible, fmt::Write};
 use embedded_graphics::{
-    mono_font::{ascii::FONT_5X8, MonoTextStyle},
+    mono_font::{MonoTextStyle, ascii::FONT_5X8},
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{

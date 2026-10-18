@@ -3,7 +3,7 @@
 use core::{
     future::Future,
     pin::pin,
-    sync::atomic::{compiler_fence, Ordering},
+    sync::atomic::{Ordering, compiler_fence},
 };
 use embedded_hal_async::spi::SpiBus;
 
@@ -99,8 +99,9 @@ impl<SPI: SpiBus<u8>, C: DmaControl> SpiBus<u8> for CancelSafe<SPI, C> {
 mod nrf {
     use super::*;
     use embassy_nrf::{
+        Peri,
         interrupt::{self, typelevel::Interrupt},
-        peripherals, spim, Peri,
+        peripherals, spim,
     };
 
     struct Spi2Control;
@@ -155,9 +156,9 @@ mod nrf {
         pub fn new(
             spi: Peri<'d, peripherals::SPI2>,
             irq: impl interrupt::typelevel::Binding<
-                    interrupt::typelevel::SPI2,
-                    spim::InterruptHandler<peripherals::SPI2>,
-                > + 'd,
+                interrupt::typelevel::SPI2,
+                spim::InterruptHandler<peripherals::SPI2>,
+            > + 'd,
             sck: Peri<'d, peripherals::P0_20>,
             mosi: Peri<'d, peripherals::P0_17>,
             config: spim::Config,

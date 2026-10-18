@@ -8,8 +8,8 @@ use core::convert::Infallible;
 use embedded_graphics::{
     framebuffer::Framebuffer as GraphicsFrameBuffer,
     pixelcolor::{
-        raw::{LittleEndian, RawU1},
         BinaryColor,
+        raw::{LittleEndian, RawU1},
     },
     prelude::*,
 };

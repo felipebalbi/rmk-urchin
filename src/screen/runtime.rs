@@ -2,7 +2,7 @@
 //! before ADC/BLE tasks start, and retained across every panel tick.
 
 use core::{convert::Infallible, marker::PhantomData};
-use embassy_futures::select::{select, select3, Either, Either3};
+use embassy_futures::select::{Either, Either3, select, select3};
 use embassy_time::{Duration, Instant, Timer};
 use embedded_hal::digital::OutputPin;
 use embedded_hal_async::{delay::DelayNs, spi::SpiBus};
@@ -18,7 +18,7 @@ use rmk::{
 
 use crate::{
     nice_view::NiceView,
-    screen::{HostLink, PanelCadence, Role, Screen, ScreenState, PANEL_PERIOD_US},
+    screen::{HostLink, PANEL_PERIOD_US, PanelCadence, Role, Screen, ScreenState},
 };
 
 pub enum ScreenEvent {

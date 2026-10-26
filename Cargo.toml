@@ -10,8 +10,8 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Upstream comparison reference; .cargo/config.toml selects the pinned buffered fork.
-rmk = { git = "https://github.com/rmk-rs/rmk.git", rev = "535cd7191338bd6fec656dfd4a4b36c1f159736d", default-features = false, features = [
+# Firmware and native checks pin the same held-buffer RMK revision.
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "c7d450a1266bade15e8bdde26c15b33cefb2d597", default-features = false, features = [
     "nrf52840_ble",
     "split",
     "subrating",

@@ -52,7 +52,7 @@ from the repository root so `.cargo/config.toml` supplies the real
 host-only features and dependencies out of firmware builds.
 
 These checks compile the firmware's display modules directly and use the same
-selected RMK source as the firmware, including the pinned fork override below.
+selected RMK source as the firmware, including the pinned revision below.
 Coverage includes framebuffer
 rotation/framing, role-specific Bluetooth icons and advertising animation,
 panel refresh scheduling and recovery, DMA cancellation ordering, startup RMK
@@ -97,10 +97,13 @@ Quick-tap repeat remains explicitly disabled.
 Following presses and releases wait behind an undecided tap/hold. The owner
 commits first, then captured keys execute on the selected layer with their original
 logical times. Expect bounded decision latency, commonly up to the 200 ms term;
-full Morse/tap-dance owners remain legacy. The 32-event FIFO degrades oldest owners
-to taps under exhaustion, and legacy ownership exhaustion can degrade a fresh
-press to a balanced tap. This avoids stuck actions, not incorrect typing intent:
-a degraded Backspace tap can delete text.
+full Morse/tap-dance owners remain legacy. The existing held-key buffer retains
+16 press generations, including deferred repetitions and actions awaiting release.
+Under pressure, the oldest unresolved ordered owner can resolve as a tap to drain
+pending work. If every slot still owns a held action, a fresh press is rejected
+with a diagnostic rather than losing an admitted release. These are bounded
+overload fallbacks, not guarantees of typing intent: a degraded Backspace tap can
+delete text.
 
 This follows the selected ZMK home-row/thumb settings, not full ZMK parity. RMK
 still releases combo output on the last member and resolves events at or after
@@ -143,14 +146,12 @@ SPI power consumption.
 
 ## Fork source and optional USB logging
 
-Firmware and host checks pin upstream `main` at
-[`535cd7191338bd6fec656dfd4a4b36c1f159736d`](https://github.com/rmk-rs/rmk/commit/535cd7191338bd6fec656dfd4a4b36c1f159736d)
-(2026-10-16; upstream HEAD checked on 2026-10-17) as a comparison reference.
-`.cargo/config.toml` patches that Git source to the published buffered fork at
-[`5f0ab05292f6d757d25c0491071c6c8190318831`](https://github.com/felipebalbi/rmk/commit/5f0ab05292f6d757d25c0491071c6c8190318831).
-Firmware and host checks both enable `buffered_tap_hold` and resolve this exact
-revision. No sibling checkout is required, and the build does not follow a moving
-branch. The upstream SHA alone is the comparison identity, not the selected source.
+Firmware and host checks directly pin the held-buffer implementation at
+[`c7d450a1266bade15e8bdde26c15b33cefb2d597`](https://github.com/felipebalbi/rmk/commit/c7d450a1266bade15e8bdde26c15b33cefb2d597)
+in the published fork. Both enable `buffered_tap_hold` and resolve this exact
+revision. No sibling checkout or local source override is required, and the
+build does not follow a moving branch. The earlier parallel-FIFO implementation
+remains in Git history for comparison and rollback.
 Compatibility updates move each half's battery ADC into its own `.battery` table,
 use bare processor registration, and clone the USB device configuration before
 giving the remaining configuration to BLE. Key mappings and the display's custom

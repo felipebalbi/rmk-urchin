@@ -14,6 +14,7 @@ license = "MIT OR Apache-2.0"
 rmk = { git = "https://github.com/rmk-rs/rmk.git", rev = "535cd7191338bd6fec656dfd4a4b36c1f159736d", default-features = false, features = [
     "nrf52840_ble",
     "split",
+    "subrating",
     "async_matrix",
     "buffered_tap_hold",
     "adafruit_bl",

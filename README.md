@@ -107,6 +107,25 @@ still releases combo output on the last member and resolves events at or after
 the tapping deadline as timeouts. Mappings, pins, layers and thumb combos are
 unchanged. The configured central idle timeout is 30 seconds.
 
+## Split connection subrating
+
+Both halves enable RMK's `subrating` feature to reduce sleeping split-link radio
+activity on the nRF52840. The idle timeout remains 30 seconds. With a host
+connected, RMK requests a subrate factor of 30 on the 7.5 ms split interval,
+giving approximately 225 ms between scheduled split events while asleep.
+
+RMK documents roughly 116 ms average / 232 ms worst-case wake latency for the
+first peripheral-side keypress; the split link returns to fast operation after
+wake. A central-side keypress can initiate wake locally. These are upstream
+timing figures, not measured guarantees for this keyboard. Without a host,
+RMK uses a larger sleep subrate and peripheral-side wake can take longer.
+
+Flash matching central and peripheral images. Enabling or disabling this feature
+changes RMK's storage identity and may require host and split re-pairing. During
+the trial, check quick taps released before wake, held keys, and waking from each
+half for missing or stuck reports. Remove `"subrating"` from `Cargo.toml` and
+rebuild both halves to return to ordinary split connection parameters.
+
 ## Screen sleep and wake
 
 Both screens consume RMK's sleep/wake events, including the existing split-link

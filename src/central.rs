@@ -46,7 +46,6 @@ mod keybaord_central {
     #[Override(entry)]
     fn run_with_initial_screen_state() {
         status_screen.seed_from_keymap(&keymap);
-        let mut wpm_processor = rmk::processor::builtin::wpm::WpmProcessor::new();
         let mut usb_transport =
             rmk::usb::UsbTransport::new(driver, rmk_config.device_config.clone())
                 .with_host_service(&host_service);
@@ -70,7 +69,6 @@ mod keybaord_central {
             status_screen,
             usb_transport,
             ble_transport,
-            wpm_processor,
             watchdog_runner,
             battery_processor,
         )

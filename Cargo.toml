@@ -10,8 +10,8 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Firmware and native checks pin the same held-buffer RMK revision.
-rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "c7d450a1266bade15e8bdde26c15b33cefb2d597", default-features = false, features = [
+# Firmware and native checks pin the upstream, tap-hold, and USB readiness integration.
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "a5575a592094a0326a10a3897c6b8fc9a28acab7", default-features = false, features = [
     "nrf52840_ble",
     "split",
     "subrating",
@@ -23,18 +23,18 @@ rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "c7d450a1266bade15
     "host_lock",
     "watchdog",
 ] }
-nrf-sdc = { version = "0.4.0", default-features = false, features = [
+nrf-sdc = { git = "https://github.com/alexmoon/nrf-sdc", rev = "9cf87fa7883b89b2d4dc7cd94864da7927bd858c", default-features = false, features = [
     "defmt",
     "peripheral",
     "central",
     "nrf52840",
 ] }
-nrf-mpsl = { version = "0.4.0", default-features = false, features = [
+nrf-mpsl = { git = "https://github.com/alexmoon/nrf-sdc", rev = "9cf87fa7883b89b2d4dc7cd94864da7927bd858c", default-features = false, features = [
     "defmt",
     "critical-section-impl",
     "nrf52840",
 ] }
-bt-hci = { version = "0.10", default-features = false, features = ["defmt"] }
+bt-hci = { version = "0.11", default-features = false, features = ["defmt"] }
 
 cortex-m = "0.7.7"
 cortex-m-rt = "0.7.5"

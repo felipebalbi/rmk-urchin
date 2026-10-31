@@ -10,8 +10,8 @@ embedded-hal = "1"
 embedded-hal-async = "1"
 heapless = "0.9"
 futures = "0.3"
-rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "c7d450a1266bade15e8bdde26c15b33cefb2d597", default-features = false, features = ["std", "log", "split", "buffered_tap_hold"] }
-rmk-config = { git = "https://github.com/felipebalbi/rmk.git", rev = "c7d450a1266bade15e8bdde26c15b33cefb2d597" }
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "a5575a592094a0326a10a3897c6b8fc9a28acab7", default-features = false, features = ["std", "log", "split", "buffered_tap_hold"] }
+rmk-config = { git = "https://github.com/felipebalbi/rmk.git", rev = "a5575a592094a0326a10a3897c6b8fc9a28acab7" }
 # rmk-config enables serde/std in native tests. Match that feature on the
 # legacy serializer used by embassy-usb so its Error implements StdError.
 ssmarshal = { version = "1.0", features = ["std"] }

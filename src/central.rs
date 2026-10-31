@@ -4,6 +4,7 @@
 use panic_probe as _;
 use rmk::macros::rmk_central;
 
+mod clock_config;
 mod display_spi;
 mod nice_view;
 mod screen;
@@ -15,6 +16,47 @@ embassy_nrf::bind_interrupts!(struct DisplayIrqs {
 
 #[rmk_central]
 mod keybaord_central {
+    // Keep resource allocation and startup order aligned with RMK's nRF chip initialization.
+    #[Override(chip_init)]
+    fn chip_init() {
+        use embassy_nrf::interrupt::InterruptExt;
+        let p = embassy_nrf::init(crate::clock_config::embassy_config());
+        let mpsl_p = nrf_sdc::mpsl::Peripherals::new(
+            p.RTC0, p.TIMER0, p.TEMP, p.PPI_CH19, p.PPI_CH30, p.PPI_CH31,
+        );
+        static MPSL: static_cell::StaticCell<nrf_sdc::mpsl::MultiprotocolServiceLayer> =
+            static_cell::StaticCell::new();
+        static SESSION_MEM: static_cell::StaticCell<nrf_sdc::mpsl::SessionMem<1>> =
+            static_cell::StaticCell::new();
+        let mpsl = MPSL.init(defmt::unwrap!(
+            nrf_sdc::mpsl::MultiprotocolServiceLayer::with_timeslots(
+                mpsl_p,
+                Irqs,
+                crate::clock_config::mpsl_config(),
+                SESSION_MEM.init(nrf_sdc::mpsl::SessionMem::new()),
+            )
+        ));
+        spawner.spawn(mpsl_task(&*mpsl).unwrap());
+        let sdc_p = nrf_sdc::Peripherals::new(
+            p.PPI_CH17, p.PPI_CH18, p.PPI_CH20, p.PPI_CH21, p.PPI_CH22, p.PPI_CH23, p.PPI_CH24,
+            p.PPI_CH25, p.PPI_CH26, p.PPI_CH27, p.PPI_CH28, p.PPI_CH29,
+        );
+        let mut rng = embassy_nrf::rng::Rng::new(p.RNG, Irqs);
+        let mut sdc_mem = nrf_sdc::Mem::<
+            {
+                rmk::ble::calculate_sdc_memory_size(
+                    1,
+                    rmk::ble::NUM_HOST_LINKS,
+                    SDC_PACKET_SIZE,
+                    SDC_TX_BUFFERS,
+                    SDC_RX_BUFFERS,
+                )
+            },
+        >::new();
+        let ble_controller = defmt::unwrap!(build_sdc(sdc_p, &mut rng, &*mpsl, &mut sdc_mem));
+        let ble_addr = crate::clock_config::ble_address();
+    }
+
     #[register_processor]
     fn status_screen() -> impl rmk::processor::PollingProcessor {
         use crate::screen::runtime::{Central, ScreenProcessor};

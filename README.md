@@ -49,6 +49,18 @@ Changes to the RMK revision or Cargo features can clear stored settings and
 bonds, requiring host and split re-pairing. Stored/Vial keymaps can override
 compiled defaults; back up custom mappings before resetting them.
 
+## Vial
+
+Connect the left (central) half over USB, keep the right half powered, and open
+[Vial](https://get.vial.today/download/) or [Vial Web](https://vial.rocks/).
+Select `rmk-urchin` to edit any of the four layers. Changes are stored on the
+keyboard automatically; use **File → Save current layout** to back them up.
+
+`vial.json` describes all 34 physical keys, including the four thumbs. It is
+embedded in the firmware by `build.rs`, so changes to the visual layout require
+rebuilding and flashing. Use **File → Load dummy JSON** to preview `vial.json`
+without flashing; dummy mode does not edit the connected keyboard.
+
 ## Displays and power
 
 Each screen shows local battery level in ten segments, or `?` when unknown.

@@ -21,6 +21,8 @@ mod sleep_checks;
 mod transport_checks;
 #[cfg(test)]
 mod typing_checks;
+#[cfg(test)]
+mod vial_checks;
 
 #[cfg(test)]
 mod tests {

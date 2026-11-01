@@ -1,10 +1,8 @@
 [package]
 name = "rmk-urchin"
 version = "0.1.0"
-authors = ["Haobo Gu <haobogu@outlook.com>"]
-description = "Keyboard firmware written in Rust"
-homepage = "https://github.com/haobogu/rmk"
-repository = "https://github.com/haobogu/rmk"
+authors = ["Felipe Balbi <felipe@balbi.sh>"]
+description = "Urchin RMK Firmware"
 readme = "README.md"
 edition = "2024"
 license = "MIT OR Apache-2.0"

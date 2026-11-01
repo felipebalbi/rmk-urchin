@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 # Firmware and native checks pin the upstream, tap-hold, and USB readiness integration.
-rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "a5575a592094a0326a10a3897c6b8fc9a28acab7", default-features = false, features = [
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "18300680e2f16046643b9f8151abae891df998a4", default-features = false, features = [
     "nrf52840_ble",
     "split",
     "subrating",

@@ -70,6 +70,13 @@ zero-based profile (`P0`, `P1`, etc.). Its static host icon distinguishes connec
 (plain Bluetooth symbol), advertising (small squares and short arcs on both sides),
 and disconnected (an X). The peripheral shows `OK` or `WAIT` for its split link.
 
+![Dark screen previews: central connected, advertising and disconnected; peripheral connected and waiting](assets/screen-states.svg)
+
+Pixel-accurate previews generated from the firmware renderer, enlarged for
+readability. Battery values are examples, not measurements.
+
+![Central screen previews for the Base, Left, Right and Tri layers](assets/screen-layers.svg)
+
 Status fields have fixed bounds. Ordinary changes update only affected physical
 rows; startup, wake, and recovery still redraw the full screen. Unchanged content
 uses hold commands at the same 16 ms panel cadence, without advertising animation.

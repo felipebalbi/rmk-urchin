@@ -11,6 +11,7 @@ mod display_spi;
 mod dma_checks;
 #[path = "../../../src/nice_view.rs"]
 mod nice_view;
+mod partial_checks;
 #[path = "../../../src/screen/runtime.rs"]
 mod runtime;
 #[path = "../../../src/screen.rs"]
@@ -21,12 +22,14 @@ mod sleep_checks;
 mod transport_checks;
 #[cfg(test)]
 mod typing_checks;
+mod ui_checks;
 #[cfg(test)]
 mod vial_checks;
 
 #[cfg(test)]
 mod tests {
     use super::{nice_view::*, screen::*};
+    use crate::ui_checks::PanelImage;
     use embedded_graphics::{pixelcolor::BinaryColor, prelude::*};
     use embedded_hal::{digital, spi};
     use std::{cell::RefCell, convert::Infallible, rc::Rc};
@@ -249,6 +252,14 @@ mod tests {
         )
     }
 
+    fn assert_panel_state(trace: &Shared, state: &ScreenState) {
+        let mut memory = PanelImage::new();
+        for packet in &trace.borrow().writes {
+            memory.apply(packet);
+        }
+        memory.assert_state(state);
+    }
+
     #[test]
     fn nice_nano_v2_supply_powers_startup_image_and_idle_maintenance_on_both_roles() {
         for role in [Role::Central, Role::Peripheral] {
@@ -370,111 +381,7 @@ mod tests {
     }
 
     #[test]
-    fn battery_icon_fills_ten_separated_columns_at_ten_percent_thresholds() {
-        for role in [Role::Central, Role::Peripheral] {
-            let mut state = ScreenState::new(role);
-            state.set_battery(Some(0));
-            let unchanged: Vec<_> = image(&state)
-                .into_iter()
-                .filter(|(_, y)| !(12..32).contains(y))
-                .collect();
-            for (level, filled) in [
-                (0, 0),
-                (1, 0),
-                (9, 0),
-                (10, 1),
-                (19, 1),
-                (20, 2),
-                (29, 2),
-                (30, 3),
-                (39, 3),
-                (40, 4),
-                (49, 4),
-                (50, 5),
-                (59, 5),
-                (60, 6),
-                (69, 6),
-                (70, 7),
-                (79, 7),
-                (80, 8),
-                (89, 8),
-                (90, 9),
-                (93, 9),
-                (99, 9),
-                (100, 10),
-                (255, 10),
-            ] {
-                state.set_battery(Some(level));
-                let pixels = image(&state);
-                // The wide body, right-hand terminal and interior gaps remain
-                // visible even when the battery is empty or completely full.
-                for point in [(3, 12), (58, 12), (3, 31), (58, 31), (61, 21)] {
-                    assert!(pixels.contains(&point), "missing battery outline {point:?}");
-                }
-                for (column, x) in [6, 11, 16, 21, 26, 31, 36, 41, 46, 51]
-                    .into_iter()
-                    .enumerate()
-                {
-                    for dx in 0..4 {
-                        for y in 15..29 {
-                            assert_eq!(
-                                pixels.contains(&(x + dx, y)),
-                                column < filled,
-                                "{role:?}: level {level}, column {column}"
-                            );
-                        }
-                    }
-                }
-                for x in [10, 15, 20, 25, 30, 35, 40, 45, 50] {
-                    for y in 15..29 {
-                        assert!(!pixels.contains(&(x, y)), "columns must stay separated");
-                    }
-                }
-                assert_eq!(
-                    pixels
-                        .into_iter()
-                        .filter(|(_, y)| !(12..32).contains(y))
-                        .collect::<Vec<_>>(),
-                    unchanged,
-                    "battery changes must not alter the label, USB bolt or other status fields"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn unavailable_battery_shows_question_mark_instead_of_empty_or_full_segments() {
-        use embedded_graphics::{
-            mono_font::{ascii::FONT_5X8, MonoTextStyle},
-            text::{Baseline, Text},
-        };
-        for role in [Role::Central, Role::Peripheral] {
-            let unknown = ScreenState::new(role);
-            let mut empty = ScreenState::new(role);
-            empty.set_battery(Some(0));
-            assert_ne!(image(&unknown), image(&empty));
-            let mut expected = FrameBuffer::new();
-            empty.render(&mut expected, 0).unwrap();
-            Text::with_baseline(
-                "?",
-                Point::new(29, 18),
-                MonoTextStyle::new(&FONT_5X8, BinaryColor::On),
-                Baseline::Top,
-            )
-            .draw(&mut expected)
-            .unwrap();
-            let mut actual = FrameBuffer::new();
-            unknown.render(&mut actual, 0).unwrap();
-            assert_eq!(
-                actual.frame(false),
-                expected.frame(false),
-                "unknown level must show only a centered question mark inside the outline"
-            );
-        }
-    }
-
-    #[test]
-    fn battery_updates_erase_old_segments_and_unknown_marker_on_the_panel() {
+    fn battery_updates_erase_old_fill_percentage_and_unknown_marker_on_the_panel() {
         for role in [Role::Central, Role::Peripheral] {
             let (p, trace) = panel();
             let mut screen = Screen::new(p, role);
@@ -492,17 +399,8 @@ mod tests {
                 let mut state = ScreenState::new(role);
                 state.set_usb_powered(true);
                 state.set_battery(level);
-                let mut clean = FrameBuffer::new();
-                clean.clear(BinaryColor::Off).unwrap();
-                state.render(&mut clean, now).unwrap();
-                let trace = trace.borrow();
-                let actual = trace.writes.last().unwrap();
-                assert_eq!(actual.len(), 1498, "battery change must reach the panel");
-                assert_eq!(
-                    &actual[1..],
-                    &clean.frame(false)[1..],
-                    "{role:?}: stale battery pixels after changing to {level:?}"
-                );
+                assert_ne!(trace.borrow().writes.last().unwrap()[0] & 1, 0);
+                assert_panel_state(&trace, &state);
             }
         }
     }
@@ -542,153 +440,7 @@ mod tests {
     }
 
     #[test]
-    fn central_profile_is_a_large_bottom_right_number_without_a_profile_label() {
-        let mut central = ScreenState::new(Role::Central);
-        let mut numbers = Vec::new();
-        let mut header = None;
-        for profile in 0..6 {
-            central.set_host(profile, HostLink::Connected);
-            let pixels = image(&central);
-            let number: Vec<_> = pixels.iter().copied().filter(|(_, y)| *y >= 124).collect();
-            assert!(!number.is_empty(), "profile must appear at the bottom");
-            let left = number.iter().map(|(x, _)| *x).min().unwrap();
-            let right = number.iter().map(|(x, _)| *x).max().unwrap();
-            let top = number.iter().map(|(_, y)| *y).min().unwrap();
-            let bottom = number.iter().map(|(_, y)| *y).max().unwrap();
-            assert!(
-                left >= 40 && (60..66).contains(&right),
-                "profile must be right aligned"
-            );
-            assert!(
-                right - left >= 11 && bottom - top >= 23,
-                "profile number must be large enough to read easily"
-            );
-            assert!(
-                (151..158).contains(&bottom),
-                "profile must sit near the bottom edge"
-            );
-            assert!(
-                !pixels.iter().any(|(_, y)| (54..62).contains(y)),
-                "remove the old Profile N line"
-            );
-            let upper: Vec<_> = pixels.into_iter().filter(|(_, y)| *y < 124).collect();
-            if let Some(header) = &header {
-                assert_eq!(&upper, header);
-            }
-            header = Some(upper);
-            assert!(
-                !numbers.contains(&number),
-                "profile digits must be distinguishable"
-            );
-            numbers.push(number);
-        }
-        // Even unexpected multi-digit values must stay in bounds and below the layer.
-        central.set_host(255, HostLink::Connected);
-        let _ = image(&central);
-        let mut peripheral = ScreenState::new(Role::Peripheral);
-        assert!(!peripheral.set_host(5, HostLink::Connected));
-        assert!(
-            !image(&peripheral).iter().any(|(_, y)| *y >= 124),
-            "the peripheral has no host profile"
-        );
-    }
-
-    #[test]
-    fn bluetooth_icons_replace_link_text_on_both_roles_and_preserve_profiles() {
-        let mut c = ScreenState::new(Role::Central);
-        let mut p = ScreenState::new(Role::Peripheral);
-        c.set_host(5, HostLink::Connected);
-        p.set_central_connected(true);
-        for state in [&c, &p] {
-            let pixels = image(state);
-            assert!(
-                pixels.iter().any(|(x, y)| *x >= 50 && (39..54).contains(y)),
-                "Bluetooth icon must be next to the role label"
-            );
-            assert!(
-                !pixels.iter().any(|(_, y)| (66..74).contains(y)),
-                "link status text must be replaced, not duplicated"
-            );
-            // Stem and upper loop of the standard Bluetooth rune.
-            for point in [(56, 40), (56, 46), (56, 52), (61, 44)] {
-                assert!(
-                    pixels.contains(&point),
-                    "missing Bluetooth rune pixel {point:?}"
-                );
-            }
-        }
-        let connected_icon: Vec<_> = image(&c)
-            .into_iter()
-            .filter(|(x, y)| *x >= 50 && (39..54).contains(y))
-            .collect();
-        assert_eq!(
-            connected_icon,
-            image(&p)
-                .into_iter()
-                .filter(|(x, y)| *x >= 50 && (39..54).contains(y))
-                .collect::<Vec<_>>()
-        );
-        let profile_five = image(&c);
-        c.set_host(0, HostLink::Connected);
-        assert_ne!(image(&c), profile_five, "profile number remains visible");
-        c.set_host(0, HostLink::Inactive);
-        p.set_central_connected(false);
-        for state in [&c, &p] {
-            let pixels = image(state);
-            for point in [(60, 46), (66, 46), (63, 49), (60, 52), (66, 52)] {
-                assert!(
-                    pixels.contains(&point),
-                    "missing disconnected X pixel {point:?}"
-                );
-            }
-            assert!(!connected_icon.contains(&(66, 52)));
-        }
-    }
-
-    fn wire_pixel(wire: &[u8], x: usize, y: usize) -> bool {
-        assert_eq!(
-            wire.len(),
-            1498,
-            "expected a complete image, not a hold command"
-        );
-        let physical_x = 159 - y;
-        wire[2 + x * 22 + physical_x / 8] & (1 << (physical_x % 8)) != 0
-    }
-
-    #[test]
-    fn advertising_blinks_every_half_second_without_events_or_extra_idle_images() {
-        let (p, t) = panel();
-        let mut screen = Screen::new(p, Role::Central);
-        screen.state_mut().set_host(3, HostLink::Advertising);
-        futures::executor::block_on(async {
-            for now in (0..=1_024_000).step_by(16_000) {
-                screen.tick(now).await.unwrap();
-            }
-        });
-        let trace = t.borrow();
-        let images: Vec<_> = trace.writes.iter().filter(|w| w.len() == 1498).collect();
-        assert_eq!(images.len(), 3, "initial image, blink off, blink on");
-        assert!(wire_pixel(images[0], 56, 46));
-        assert!(!wire_pixel(images[1], 56, 46));
-        assert_eq!(&images[0][1..], &images[2][1..]);
-        for x in 0..68 {
-            for y in 0..160 {
-                if !(x >= 50 && (39..54).contains(&y)) {
-                    assert_eq!(
-                        wire_pixel(images[0], x, y),
-                        wire_pixel(images[1], x, y),
-                        "only the icon should blink, not the label/profile"
-                    );
-                }
-            }
-        }
-        for (i, write) in trace.writes.iter().enumerate() {
-            assert_eq!(write[0] & 2, if i % 2 == 0 { 0 } else { 2 });
-        }
-    }
-
-    #[test]
-    fn advertising_to_connected_restores_steady_icon_and_stops_animation() {
+    fn advertising_to_connected_updates_the_icon_once_without_idle_images() {
         let (p, t) = panel();
         let mut screen = Screen::new(p, Role::Central);
         screen.state_mut().set_host(0, HostLink::Advertising);
@@ -697,16 +449,17 @@ mod tests {
             screen.tick(16_000).await.unwrap();
             screen.tick(512_000).await.unwrap();
         });
-        assert!(!wire_pixel(t.borrow().writes.last().unwrap(), 56, 46));
+        assert_panel_state(&t, screen.state_mut());
         screen.state_mut().set_host(0, HostLink::Connected);
         futures::executor::block_on(screen.tick(624_000)).unwrap();
-        assert!(wire_pixel(t.borrow().writes.last().unwrap(), 56, 46));
-        let images = t.borrow().writes.iter().filter(|w| w.len() == 1498).count();
+        assert_panel_state(&t, screen.state_mut());
+        let images = t.borrow().writes.iter().filter(|w| w[0] & 1 != 0).count();
+        assert_eq!(images, 2, "startup image and one host-state update");
         for now in [1_008_000, 1_504_000, 2_000_000] {
             futures::executor::block_on(screen.tick(now)).unwrap();
         }
         assert_eq!(
-            t.borrow().writes.iter().filter(|w| w.len() == 1498).count(),
+            t.borrow().writes.iter().filter(|w| w[0] & 1 != 0).count(),
             images
         );
     }
@@ -741,12 +494,10 @@ mod tests {
             screen.state_mut().set_layer((i % 4) as u8);
         }
         futures::executor::block_on(screen.tick(3_216_000)).unwrap();
-        let mut expected = FrameBuffer::new();
         let mut state = ScreenState::new(Role::Central);
         state.set_host(5, HostLink::Connected);
         state.set_layer(1);
-        state.render(&mut expected, 0).unwrap();
-        assert_eq!(t.borrow().writes.last().unwrap(), expected.frame(true));
+        assert_panel_state(&t, &state);
         // Content writes near the next deadline must not defer inversion.
         screen.state_mut().set_battery(Some(42));
         futures::executor::block_on(screen.tick(3_232_000)).unwrap();
@@ -754,7 +505,11 @@ mod tests {
         for now in (3_248_000..=3_328_000).step_by(16_000) {
             futures::executor::block_on(screen.tick(now)).unwrap();
         }
-        assert_eq!(t.borrow().writes.last().unwrap().len(), 1498);
+        let packet = t.borrow().writes.last().unwrap().clone();
+        assert_ne!(packet[0] & 1, 0);
+        assert!((1..=68).contains(&((packet.len() - 2) / 22)));
+        state.set_battery(Some(42));
+        assert_panel_state(&t, &state);
     }
 
     #[test]
@@ -790,8 +545,8 @@ mod tests {
         use crate::runtime::Subscriptions;
         use rmk::{
             event::{
-                publish_event, BatteryStatusEvent, CentralConnectedEvent, ConnectionStatus,
-                ConnectionStatusChangeEvent, LayerChangeEvent,
+                BatteryStatusEvent, CentralConnectedEvent, ConnectionStatus,
+                ConnectionStatusChangeEvent, LayerChangeEvent, publish_event,
             },
             types::{
                 battery::{BatteryStatus, ChargeState},
@@ -868,8 +623,14 @@ mod tests {
         for (i, write) in t.writes.iter().enumerate() {
             assert_eq!(write[0] & 2, if i % 2 == 0 { 0 } else { 2 });
             let duration = t.transaction_ends[i] - t.transaction_starts[i];
-            if write.len() == 1498 {
-                assert!((11_984..16_000).contains(&duration));
+            if write[0] & 1 != 0 {
+                if write.len() == 1498 {
+                    assert!((11_984..16_000).contains(&duration));
+                } else {
+                    assert!((24..1498).contains(&write.len()));
+                    assert!(duration >= write.len() as u64 * 8);
+                    assert!(duration < 16_000);
+                }
                 if let Some(last) = last_image {
                     assert!(t.transaction_starts[i] - last >= 100_000);
                 }
@@ -949,7 +710,7 @@ mod tests {
     fn actual_registered_polling_loop_retains_startup_events_and_fixed_cadence() {
         use crate::runtime::{Central, ScreenProcessor};
         use rmk::{
-            event::{publish_event, BatteryStatusEvent, LayerChangeEvent},
+            event::{BatteryStatusEvent, LayerChangeEvent, publish_event},
             processor::PollingProcessor,
             types::battery::{BatteryStatus, ChargeState},
         };
@@ -1034,8 +795,8 @@ mod tests {
         use crate::runtime::{Peripheral, ScreenProcessor};
         use rmk::{
             event::{
-                publish_event, BatteryStatusEvent, CentralConnectedEvent, ConnectionStatus,
-                ConnectionStatusChangeEvent, LayerChangeEvent,
+                BatteryStatusEvent, CentralConnectedEvent, ConnectionStatus,
+                ConnectionStatusChangeEvent, LayerChangeEvent, publish_event,
             },
             processor::PollingProcessor,
             types::{
@@ -1082,12 +843,12 @@ mod tests {
     fn initialized_nonzero_default_layer_seeds_first_image_without_any_layer_event() {
         use crate::runtime::{Central, ScreenProcessor};
         use rmk::{
+            KeymapData,
             config::{BehaviorConfig, PositionalConfig},
             event::{LayerChangeEvent, SubscribableEvent},
             keymap::KeyMap,
             processor::PollingProcessor,
             types::action::KeyAction,
-            KeymapData,
         };
         use std::{
             future::Future,
@@ -1131,14 +892,13 @@ mod tests {
         assert_eq!(running.as_mut().poll(&mut cx), Poll::Pending);
         drop(running);
         expected.set_layer(1);
-        expected.render(&mut fb, 0).unwrap();
-        assert_eq!(t.borrow().writes.last().unwrap(), fb.frame(false));
+        assert_panel_state(&t, &expected);
     }
 
     fn bolt_pixels(state: &ScreenState) -> Vec<(i32, i32)> {
         image(state)
             .into_iter()
-            .filter(|(x, y)| (50..=59).contains(x) && (0..=11).contains(y))
+            .filter(|(x, y)| (57..62).contains(x) && (23..33).contains(y))
             .collect()
     }
 
@@ -1155,15 +915,15 @@ mod tests {
                 assert!(!state.set_usb_powered(true));
                 let bolt = bolt_pixels(&state);
                 assert!(
-                    bolt.len() > 15,
+                    bolt.len() >= 10,
                     "white bolt must contain real visible pixels"
                 );
                 // Extreme tips, center and surrounding black notches distinguish
                 // a lightning shape from a filled rectangle or an empty glyph.
-                for point in [(57, 0), (50, 6), (51, 11), (54, 5)] {
+                for point in [(61, 23), (58, 27), (61, 27), (58, 31)] {
                     assert!(bolt.contains(&point), "missing bolt pixel {point:?}");
                 }
-                for point in [(50, 0), (59, 11)] {
+                for point in [(57, 23), (61, 32)] {
                     assert!(!bolt.contains(&point));
                 }
                 let without_bolt: Vec<_> = image(&state)
@@ -1231,9 +991,7 @@ mod tests {
         let mut expected = ScreenState::new(Role::Central);
         expected.set_battery(Some(100));
         expected.set_usb_powered(true);
-        let mut fb = FrameBuffer::new();
-        expected.render(&mut fb, 0).unwrap();
-        assert_eq!(left.borrow().writes.last().unwrap(), fb.frame(false));
+        assert_panel_state(&left, &expected);
         assert_eq!(
             right.borrow().writes.last().unwrap().len(),
             2,
@@ -1252,19 +1010,16 @@ mod tests {
             peripheral.update().await;
         });
         expected.set_usb_powered(false);
-        expected.render(&mut fb, 0).unwrap();
-        assert_eq!(left.borrow().writes.last().unwrap(), fb.frame(true));
+        assert_panel_state(&left, &expected);
         let mut expected_right = ScreenState::new(Role::Peripheral);
         expected_right.set_usb_powered(true);
-        expected_right.render(&mut fb, 0).unwrap();
-        assert_eq!(right.borrow().writes.last().unwrap(), fb.frame(true));
+        assert_panel_state(&right, &expected_right);
         RIGHT_USB.store(false, Ordering::Relaxed);
         remote.usb = UsbState::Configured;
         rmk::event::publish_event(ConnectionStatusChangeEvent(remote));
         driver.advance(embassy_time::Duration::from_micros(112_000));
         futures::executor::block_on(peripheral.update());
         expected_right.set_usb_powered(false);
-        expected_right.render(&mut fb, 0).unwrap();
-        assert_eq!(right.borrow().writes.last().unwrap(), fb.frame(false));
+        assert_panel_state(&right, &expected_right);
     }
 }

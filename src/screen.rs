@@ -5,9 +5,7 @@ use embedded_graphics::{
     mono_font::{MonoTextStyle, ascii::FONT_5X8},
     pixelcolor::BinaryColor,
     prelude::*,
-    primitives::{
-        Line, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle, StrokeAlignment, Triangle,
-    },
+    primitives::{PrimitiveStyle, PrimitiveStyleBuilder, Rectangle, StrokeAlignment},
     text::{Baseline, Text},
 };
 use embedded_hal::digital::OutputPin;
@@ -33,20 +31,19 @@ pub enum HostLink {
     Connected,
 }
 
-/// Enlarge the existing bitmap font fourfold without a second font asset.
-/// A profile uses at most three 5x8 characters, giving a 60x32 pixel number.
-struct ProfileTarget<'a, D> {
+struct ScaledTarget<'a, D> {
     display: &'a mut D,
     origin: Point,
+    scale: i32,
 }
 
-impl<D> OriginDimensions for ProfileTarget<'_, D> {
+impl<D> OriginDimensions for ScaledTarget<'_, D> {
     fn size(&self) -> Size {
-        Size::new(15, 8)
+        Size::new(68 / self.scale as u32, 160 / self.scale as u32)
     }
 }
 
-impl<D: DrawTarget<Color = BinaryColor>> DrawTarget for ProfileTarget<'_, D> {
+impl<D: DrawTarget<Color = BinaryColor>> DrawTarget for ScaledTarget<'_, D> {
     type Color = BinaryColor;
     type Error = D::Error;
 
@@ -56,13 +53,87 @@ impl<D: DrawTarget<Color = BinaryColor>> DrawTarget for ProfileTarget<'_, D> {
     ) -> Result<(), Self::Error> {
         for Pixel(point, color) in pixels {
             Rectangle::new(
-                self.origin + Point::new(point.x * 4, point.y * 4),
-                Size::new(4, 4),
+                self.origin + point * self.scale,
+                Size::new(self.scale as u32, self.scale as u32),
             )
             .into_styled(PrimitiveStyle::with_fill(color))
             .draw(self.display)?;
         }
         Ok(())
+    }
+}
+
+fn text<D: DrawTarget<Color = BinaryColor>>(
+    display: &mut D,
+    value: &str,
+    origin: Point,
+    scale: i32,
+) -> Result<(), D::Error> {
+    Text::with_baseline(
+        value,
+        Point::zero(),
+        MonoTextStyle::new(&FONT_5X8, BinaryColor::On),
+        Baseline::Top,
+    )
+    .draw(&mut ScaledTarget {
+        display,
+        origin,
+        scale,
+    })
+    .map(|_| ())
+}
+
+fn draw_line<D: DrawTarget<Color = BinaryColor>>(
+    display: &mut D,
+    mut point: Point,
+    end: Point,
+) -> Result<(), D::Error> {
+    let dx = (end.x - point.x).abs();
+    let dy = -(end.y - point.y).abs();
+    let step = Point::new(
+        if point.x < end.x { 1 } else { -1 },
+        if point.y < end.y { 1 } else { -1 },
+    );
+    let mut error = dx + dy;
+    loop {
+        Pixel(point, BinaryColor::On).draw(display)?;
+        if point == end {
+            break;
+        }
+        let twice = 2 * error;
+        if twice >= dy {
+            error += dy;
+            point.x += step.x;
+        }
+        if twice <= dx {
+            error += dx;
+            point.y += step.y;
+        }
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+enum Field {
+    Battery,
+    Usb,
+    Layer,
+    Profile,
+    Host,
+    Split,
+}
+
+impl Field {
+    fn bounds(self) -> Rectangle {
+        let (x, y, width, height) = match self {
+            Self::Battery => (6, 23, 46, 10),
+            Self::Usb => (57, 23, 5, 10),
+            Self::Layer => (6, 69, 56, 18),
+            Self::Profile => (6, 116, 22, 18),
+            Self::Host => (36, 110, 28, 28),
+            Self::Split => (6, 69, 56, 28),
+        };
+        Rectangle::new(Point::new(x, y), Size::new(width, height))
     }
 }
 
@@ -165,101 +236,208 @@ impl ScreenState {
     pub fn render<D: DrawTarget<Color = BinaryColor>>(
         &self,
         display: &mut D,
-        now_us: u64,
+        _now_us: u64,
     ) -> Result<(), D::Error> {
         display.clear(BinaryColor::Off)?;
-        let small = MonoTextStyle::new(&FONT_5X8, BinaryColor::On);
-        Text::with_baseline("BATTERY", Point::new(3, 0), small, Baseline::Top).draw(display)?;
-        if self.usb_powered {
-            let white = PrimitiveStyle::with_fill(BinaryColor::On);
-            Triangle::new(Point::new(57, 0), Point::new(50, 6), Point::new(55, 6))
-                .into_styled(white)
-                .draw(display)?;
-            Triangle::new(Point::new(54, 4), Point::new(59, 4), Point::new(51, 11))
-                .into_styled(white)
-                .draw(display)?;
-        }
-        Rectangle::new(Point::new(3, 12), Size::new(56, 20))
-            .into_styled(
-                PrimitiveStyleBuilder::new()
-                    .stroke_color(BinaryColor::On)
-                    .stroke_width(2)
-                    .stroke_alignment(StrokeAlignment::Inside)
-                    .build(),
-            )
+        text(
+            display,
+            if self.role == Role::Central {
+                "LEFT"
+            } else {
+                "RIGHT"
+            },
+            Point::new(6, 7),
+            1,
+        )?;
+        Rectangle::new(Point::new(6, 41), Size::new(56, 1))
+            .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
             .draw(display)?;
-        let white = PrimitiveStyle::with_fill(BinaryColor::On);
-        Rectangle::new(Point::new(59, 18), Size::new(4, 8))
-            .into_styled(white)
-            .draw(display)?;
-        match self.battery {
-            Some(level) => {
-                // Ten columns, each four pixels wide with a one-pixel gap.
-                // Only complete 10% increments are filled; 100% fills all ten.
-                for column in 0..level / 10 {
-                    Rectangle::new(Point::new(6 + i32::from(column) * 5, 15), Size::new(4, 14))
-                        .into_styled(white)
-                        .draw(display)?;
-                }
-            }
-            None => {
-                Text::with_baseline("?", Point::new(29, 18), small, Baseline::Top).draw(display)?;
-            }
-        }
-        let label = match self.role {
-            Role::Central => "BLUETOOTH",
-            Role::Peripheral => "CENTRAL",
-        };
-        Text::with_baseline(label, Point::new(3, 42), small, Baseline::Top).draw(display)?;
-        if self.bluetooth_visible(now_us) {
-            let stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 2);
-            // The standard Bluetooth rune, with solid strokes on the dark panel.
-            for (start, end) in [
-                ((56, 40), (56, 52)),
-                ((56, 52), (62, 48)),
-                ((62, 48), (52, 42)),
-                ((52, 50), (62, 44)),
-                ((62, 44), (56, 40)),
-            ] {
-                Line::new(Point::from(start), Point::from(end))
-                    .into_styled(stroke)
-                    .draw(display)?;
-            }
-            let disconnected = match self.role {
-                Role::Central => self.host == HostLink::Inactive,
-                Role::Peripheral => !self.central_connected,
-            };
-            if disconnected {
-                // Clear behind the X so it remains legible over the rune.
-                Rectangle::new(Point::new(59, 45), Size::new(9, 9))
-                    .into_styled(PrimitiveStyle::with_fill(BinaryColor::Off))
-                    .draw(display)?;
-                for (start, end) in [((60, 46), (66, 52)), ((60, 52), (66, 46))] {
-                    Line::new(Point::from(start), Point::from(end))
-                        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
-                        .draw(display)?;
-                }
-            }
-        }
         if self.role == Role::Central {
-            Text::with_baseline("LAYER", Point::new(3, 104), small, Baseline::Top).draw(display)?;
-            Text::with_baseline(&self.layer_text(), Point::new(3, 116), small, Baseline::Top)
-                .draw(display)?;
-            let mut profile: String<3> = String::new();
-            let _ = write!(profile, "{}", self.profile);
-            let mut target = ProfileTarget {
-                display,
-                origin: Point::new(65 - profile.len() as i32 * 20, 124),
-            };
-            Text::with_baseline(&profile, Point::zero(), small, Baseline::Top).draw(&mut target)?;
+            text(display, "LAYER", Point::new(6, 54), 1)?;
+            text(display, "PROFILE", Point::new(6, 103), 1)?;
+            text(display, "CENTRAL", Point::new(6, 146), 1)?;
+        } else {
+            text(display, "SPLIT LINK", Point::new(6, 54), 1)?;
+            text(display, "TO LEFT", Point::new(16, 112), 1)?;
+            text(display, "PERIPHERAL", Point::new(6, 146), 1)?;
         }
+        self.render_fields(display, None)?;
         Ok(())
     }
 
-    fn bluetooth_visible(&self, now_us: u64) -> bool {
-        self.role != Role::Central
-            || self.host != HostLink::Advertising
-            || (now_us / BLINK_PERIOD_US).is_multiple_of(2)
+    pub fn render_changes<D: DrawTarget<Color = BinaryColor>>(
+        &self,
+        display: &mut D,
+        previous: &Self,
+    ) -> Result<u128, D::Error> {
+        self.render_fields(display, Some(previous))
+    }
+
+    fn render_fields<D: DrawTarget<Color = BinaryColor>>(
+        &self,
+        display: &mut D,
+        previous: Option<&Self>,
+    ) -> Result<u128, D::Error> {
+        let central = self.role == Role::Central;
+        let fields = [
+            (
+                Field::Battery,
+                previous.is_none_or(|old| old.battery != self.battery),
+            ),
+            (
+                Field::Usb,
+                previous.is_none_or(|old| old.usb_powered != self.usb_powered),
+            ),
+            (
+                Field::Layer,
+                central && previous.is_none_or(|old| old.layer != self.layer),
+            ),
+            (
+                Field::Profile,
+                central && previous.is_none_or(|old| old.profile != self.profile),
+            ),
+            (
+                Field::Host,
+                central && previous.is_none_or(|old| old.host != self.host),
+            ),
+            (
+                Field::Split,
+                !central
+                    && previous.is_none_or(|old| old.central_connected != self.central_connected),
+            ),
+        ];
+        let mut rows = 0;
+        for (field, changed) in fields {
+            if !changed {
+                continue;
+            }
+            let bounds = field.bounds();
+            bounds
+                .into_styled(PrimitiveStyle::with_fill(BinaryColor::Off))
+                .draw(display)?;
+            self.draw_field(field, &mut display.clipped(&bounds))?;
+            // Rotation maps portrait X directly to the physical gate-line address.
+            rows |= ((1u128 << bounds.size.width) - 1) << bounds.top_left.x;
+        }
+        Ok(rows)
+    }
+
+    fn draw_field<D: DrawTarget<Color = BinaryColor>>(
+        &self,
+        field: Field,
+        display: &mut D,
+    ) -> Result<(), D::Error> {
+        let white = PrimitiveStyle::with_fill(BinaryColor::On);
+        match field {
+            Field::Battery => {
+                Rectangle::new(Point::new(6, 24), Size::new(15, 8))
+                    .into_styled(
+                        PrimitiveStyleBuilder::new()
+                            .stroke_color(BinaryColor::On)
+                            .stroke_width(1)
+                            .stroke_alignment(StrokeAlignment::Inside)
+                            .build(),
+                    )
+                    .draw(display)?;
+                Rectangle::new(Point::new(21, 26), Size::new(2, 4))
+                    .into_styled(white)
+                    .draw(display)?;
+                let mut value: String<4> = String::new();
+                if let Some(level) = self.battery {
+                    let width = 11 * u32::from(level) / 100;
+                    if width != 0 {
+                        Rectangle::new(Point::new(8, 26), Size::new(width, 4))
+                            .into_styled(white)
+                            .draw(display)?;
+                    }
+                    let _ = write!(value, "{level}%");
+                } else {
+                    text(display, "?", Point::new(11, 24), 1)?;
+                    let _ = value.push_str("--%");
+                }
+                text(display, &value, Point::new(31, 24), 1)?;
+            }
+            Field::Usb if self.usb_powered => {
+                for (a, b) in [
+                    ((61, 23), (58, 27)),
+                    ((58, 27), (61, 27)),
+                    ((61, 27), (58, 31)),
+                ] {
+                    draw_line(display, Point::from(a), Point::from(b))?;
+                }
+            }
+            Field::Usb => {}
+            Field::Layer => {
+                let mut value = self.layer_text();
+                value.as_mut_str().make_ascii_uppercase();
+                let scale = if value.len() <= 5 { 2 } else { 1 };
+                let x = (68 - value.len() as i32 * 5 * scale) / 2;
+                text(display, &value, Point::new(x, 70), scale)?;
+            }
+            Field::Profile => {
+                let mut value: String<4> = String::new();
+                let _ = write!(value, "P{}", self.profile);
+                text(
+                    display,
+                    &value,
+                    Point::new(6, 117),
+                    if value.len() <= 2 { 2 } else { 1 },
+                )?;
+            }
+            Field::Split => {
+                let (value, scale) = if self.central_connected {
+                    ("OK", 3)
+                } else {
+                    ("WAIT", 2)
+                };
+                text(
+                    display,
+                    value,
+                    Point::new((68 - value.len() as i32 * 5 * scale) / 2, 70),
+                    scale,
+                )?;
+            }
+            Field::Host => {
+                let origin = Point::new(45, 117);
+                for (a, b) in [
+                    ((4, 0), (4, 12)),
+                    ((4, 0), (8, 4)),
+                    ((8, 4), (0, 10)),
+                    ((0, 2), (8, 8)),
+                    ((8, 8), (4, 12)),
+                ] {
+                    draw_line(display, origin + Point::from(a), origin + Point::from(b))?;
+                }
+                if self.host == HostLink::Advertising {
+                    for x in [43, 54] {
+                        Rectangle::new(Point::new(x, 122), Size::new(2, 2))
+                            .into_styled(white)
+                            .draw(display)?;
+                    }
+                    for arc in [
+                        [(5, 10), (4, 11), (3, 12), (3, 14), (4, 15), (5, 16)],
+                        [(3, 8), (1, 10), (0, 12), (0, 14), (1, 16), (3, 18)],
+                    ] {
+                        for pair in arc.windows(2) {
+                            for mirror in [false, true] {
+                                let points = [pair[0], pair[1]].map(|(x, y)| {
+                                    Point::new(36 + if mirror { 26 - x } else { x }, 110 + y)
+                                });
+                                draw_line(display, points[0], points[1])?;
+                            }
+                        }
+                    }
+                } else if self.host == HostLink::Inactive {
+                    Rectangle::new(Point::new(51, 125), Size::new(11, 11))
+                        .into_styled(PrimitiveStyle::with_fill(BinaryColor::Off))
+                        .draw(display)?;
+                    for (a, b) in [((52, 126), (60, 134)), ((60, 126), (52, 134))] {
+                        draw_line(display, Point::from(a), Point::from(b))?;
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -267,7 +445,6 @@ impl ScreenState {
 /// Every transaction alternates polarity; unchanged content uses hold mode.
 pub const PANEL_PERIOD_US: u64 = 16_000;
 const IMAGE_PERIOD_US: u64 = 100_000;
-const BLINK_PERIOD_US: u64 = 500_000;
 
 /// Start-to-start deadlines, not a sleep after SPI completion. If a transaction
 /// overruns, skip missed ticks instead of producing short catch-up COM phases.
@@ -293,7 +470,7 @@ impl PanelCadence {
 pub struct Screen<SPI, CS, POWER, DELAY> {
     panel: NiceView<SPI, CS, POWER, DELAY>,
     state: ScreenState,
-    rendered: Option<(ScreenState, bool)>,
+    rendered: Option<ScreenState>,
     initialized: bool,
     force_redraw: bool,
     next_polarity: bool,
@@ -381,24 +558,38 @@ where
         }
         // There is no readback: on failure the polarity on glass is unknown.
         // Keep alternating attempts and force a complete image after recovery.
-        let visible = self.state.bluetooth_visible(now_us);
-        let dirty = self.force_redraw || self.rendered != Some((self.state, visible));
-        let image_due = self
-            .last_image_us
-            .is_none_or(|last| now_us.saturating_sub(last) >= IMAGE_PERIOD_US);
+        let force_redraw = self.force_redraw;
+        let dirty = force_redraw || self.rendered != Some(self.state);
+        let image_due = force_redraw
+            || self
+                .last_image_us
+                .is_none_or(|last| now_us.saturating_sub(last) >= IMAGE_PERIOD_US);
         // Set before await so cancellation of either transaction also requests
         // a full resynchronization, not a maintenance-only recovery.
         self.force_redraw = true;
         if dirty && image_due {
             let snapshot = self.state;
-            let _ = snapshot.render(self.panel.framebuffer(), now_us);
+            let rows = match self.rendered.as_ref() {
+                Some(previous) if !force_redraw => snapshot
+                    .render_changes(self.panel.framebuffer(), previous)
+                    .unwrap(),
+                _ => {
+                    let _ = snapshot.render(self.panel.framebuffer(), now_us);
+                    crate::nice_view::ALL_ROWS
+                }
+            };
             self.last_image_us = Some(now_us);
-            self.panel.flush(polarity).await?;
-            self.rendered = Some((snapshot, visible));
+            if rows == crate::nice_view::ALL_ROWS {
+                self.panel.flush(polarity).await?;
+            } else {
+                self.panel.flush_rows(polarity, rows).await?;
+            }
+            self.rendered = Some(snapshot);
+            self.force_redraw = false;
         } else {
             self.panel.maintain(polarity).await?;
+            self.force_redraw = force_redraw;
         }
-        self.force_redraw = dirty && !image_due;
         self.last_success = Some((now_us, polarity));
         Ok(())
     }

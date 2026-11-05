@@ -2,7 +2,7 @@
 //!
 //! Wire bytes are sent LSB first, including the one-based physical row address.
 //! The panel is 160×68; the keyboard mounts it in 68×160 portrait orientation.
-//! Protocol/timing: Sharp LD-29Y03, tables 6-3-1/6-3-2 and section 6-5.
+//! Protocol/timing: Sharp LD-29Y03, tables 6-3-1/6-3-2 and section 6-6.
 
 use core::convert::Infallible;
 use embedded_graphics::{
@@ -18,6 +18,7 @@ use embedded_hal_async::{delay::DelayNs, spi::SpiBus};
 
 const ROW_BYTES: usize = 22; // address, 160 pixels, dummy byte
 const FRAME_BYTES: usize = 1 + 68 * ROW_BYTES + 1;
+pub const ALL_ROWS: u128 = (1 << 68) - 1;
 const WRITE: u8 = 0x01;
 const VCOM: u8 = 0x02;
 const CLEAR: u8 = 0x04;
@@ -29,27 +30,39 @@ pub struct FrameBuffer {
 
 impl FrameBuffer {
     pub fn new() -> Self {
-        let mut bytes = [0; FRAME_BYTES];
-        for row in 0..68 {
-            let start = 1 + row * ROW_BYTES;
-            bytes[start] = (row + 1) as u8;
-            bytes[start + 1..start + 21].fill(0xff);
-        }
         let mut pixels = GraphicsFrameBuffer::new();
         let _ = pixels.clear(BinaryColor::On);
-        Self { pixels, bytes }
+        Self {
+            pixels,
+            bytes: [0; FRAME_BYTES],
+        }
     }
 
     pub fn frame(&mut self, high_polarity: bool) -> &[u8] {
-        self.bytes[0] = WRITE | if high_polarity { VCOM } else { 0 };
+        self.frame_rows(high_polarity, ALL_ROWS)
+    }
+
+    /// Serialize selected physical rows (portrait X); ignore bits above row 67.
+    /// An empty selection produces HOLD rather than an addressless WRITE.
+    pub fn frame_rows(&mut self, high_polarity: bool, rows: u128) -> &[u8] {
+        let rows = rows & ALL_ROWS;
+        self.bytes[0] = if rows != 0 { WRITE } else { 0 } | if high_polarity { VCOM } else { 0 };
+        let mut start = 1;
         for (row, pixels) in self.pixels.data().as_chunks::<20>().0.iter().enumerate() {
+            if rows & (1 << row) == 0 {
+                continue;
+            }
+            self.bytes[start] = (row + 1) as u8;
             for (column, byte) in pixels.iter().enumerate() {
                 // RawU1 storage is MSB-first even with LittleEndian. The panel
                 // expects D0 first, so reverse only pixels, not row addresses.
-                self.bytes[2 + row * ROW_BYTES + column] = byte.reverse_bits();
+                self.bytes[start + 1 + column] = byte.reverse_bits();
             }
+            self.bytes[start + 21] = 0;
+            start += ROW_BYTES;
         }
-        &self.bytes
+        self.bytes[start] = 0;
+        &self.bytes[..start + 1]
     }
 }
 
@@ -167,6 +180,17 @@ where
             &mut self.cs,
             &mut self.delay,
             self.framebuffer.frame(high_polarity),
+        )
+        .await
+    }
+
+    /// Write selected physical rows, or maintain VCOM with HOLD if none are selected.
+    pub async fn flush_rows(&mut self, high_polarity: bool, rows: u128) -> Result<(), SPI::Error> {
+        Self::transfer(
+            &mut self.spi,
+            &mut self.cs,
+            &mut self.delay,
+            self.framebuffer.frame_rows(high_polarity, rows),
         )
         .await
     }

@@ -1,0 +1,755 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="2234" viewBox="0 0 1200 2234" role="img" aria-labelledby="title description">
+<title id="title">Urchin — all layers</title>
+<desc id="description">34-key Urchin split keyboard in typing orientation, with two thumbs per hand. Lower legends show hold actions or chord modifiers. Tinted HELD thumbs mark layer selectors, not new bindings. Tri requires both layer thumbs. Down triangles are transparent; dashes are disabled. Tri inherits R Ctrl from Right. Colors use Modus Operandi.</desc>
+<metadata>keyboard.toml sha256: c1fb8d153dc5a407dad731f74c4a6478e7a2cd3451cde3c9c3a35d65648dd1d6; Modus Operandi palette; schematic key placement.</metadata>
+<style>text{font-family:"DejaVu Sans",sans-serif;fill:#000;text-anchor:middle}.dim{fill:#595959}.title{font-size:30px;font-weight:700}.heading{font-size:21px;font-weight:700}.caption{font-size:14px}.legend{font-size:15px}.main{font-weight:600}.sub{font-size:12px}.flag{font-size:9px;font-weight:700;letter-spacing:1px}.key{fill:#f2f2f2;stroke:#595959;stroke-width:1.3}.transparent{fill:#fff;stroke:#595959;stroke-dasharray:4 3}.disabled{fill:#e0e0e0;stroke:#595959}</style>
+<rect width="1200" height="2234" fill="#fff"/>
+<text class="title" x="600" y="48">Urchin · keymap</text>
+<text class="caption dim" x="600" y="78">34 keys · two thumbs per hand · US symbol legends</text>
+<text class="legend" x="600" y="110">Tap: large legend · Hold: colored lower legend · ▽ transparent · — disabled</text>
+<g id="layer-0" data-layer="Base">
+<rect x="60" y="146" width="1080" height="464" rx="18" fill="#fff" stroke="#9f9f9f"/>
+<rect x="450" y="162" width="300" height="38" rx="9" fill="#f8f0d0"/>
+<text class="heading" x="600" y="189" fill="#624416" style="fill:#624416">0 · Base</text>
+<text class="caption dim" x="600" y="222">Tap for typing. Hold a colored thumb to access its matching layer.</text>
+<g class="binding" data-row="0" data-col="0" data-action="Q" transform="translate(146 340) rotate(0)">
+<title>Base (0,0): Q</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">Q</text>
+</g>
+<g class="binding" data-row="0" data-col="1" data-action="W" transform="translate(226 286) rotate(0)">
+<title>Base (0,1): W</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">W</text>
+</g>
+<g class="binding" data-row="0" data-col="2" data-action="E" transform="translate(306 268) rotate(0)">
+<title>Base (0,2): E</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">E</text>
+</g>
+<g class="binding" data-row="0" data-col="3" data-action="R" transform="translate(386 286) rotate(0)">
+<title>Base (0,3): R</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">R</text>
+</g>
+<g class="binding" data-row="0" data-col="4" data-action="T" transform="translate(466 304) rotate(0)">
+<title>Base (0,4): T</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">T</text>
+</g>
+<g class="binding" data-row="0" data-col="5" data-action="Y" transform="translate(766 304) rotate(0)">
+<title>Base (0,5): Y</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">Y</text>
+</g>
+<g class="binding" data-row="0" data-col="6" data-action="U" transform="translate(846 286) rotate(0)">
+<title>Base (0,6): U</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">U</text>
+</g>
+<g class="binding" data-row="0" data-col="7" data-action="I" transform="translate(926 268) rotate(0)">
+<title>Base (0,7): I</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">I</text>
+</g>
+<g class="binding" data-row="0" data-col="8" data-action="O" transform="translate(1006 286) rotate(0)">
+<title>Base (0,8): O</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">O</text>
+</g>
+<g class="binding" data-row="0" data-col="9" data-action="P" transform="translate(1086 340) rotate(0)">
+<title>Base (0,9): P</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">P</text>
+</g>
+<g class="binding" data-row="1" data-col="0" data-action="MT(A, LShift)" transform="translate(146 412) rotate(0)">
+<title>Base (1,0): MT(A, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">A</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: L Shift</text>
+</g>
+<g class="binding" data-row="1" data-col="1" data-action="MT(S, LAlt)" transform="translate(226 358) rotate(0)">
+<title>Base (1,1): MT(S, LAlt)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">S</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: L Alt</text>
+</g>
+<g class="binding" data-row="1" data-col="2" data-action="MT(D, LGui)" transform="translate(306 340) rotate(0)">
+<title>Base (1,2): MT(D, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">D</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: L GUI</text>
+</g>
+<g class="binding" data-row="1" data-col="3" data-action="MT(F, LCtrl)" transform="translate(386 358) rotate(0)">
+<title>Base (1,3): MT(F, LCtrl)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">F</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: L Ctrl</text>
+</g>
+<g class="binding" data-row="1" data-col="4" data-action="G" transform="translate(466 376) rotate(0)">
+<title>Base (1,4): G</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">G</text>
+</g>
+<g class="binding" data-row="1" data-col="5" data-action="H" transform="translate(766 376) rotate(0)">
+<title>Base (1,5): H</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">H</text>
+</g>
+<g class="binding" data-row="1" data-col="6" data-action="MT(J, RCtrl)" transform="translate(846 358) rotate(0)">
+<title>Base (1,6): MT(J, RCtrl)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">J</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: R Ctrl</text>
+</g>
+<g class="binding" data-row="1" data-col="7" data-action="MT(K, RGui)" transform="translate(926 340) rotate(0)">
+<title>Base (1,7): MT(K, RGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">K</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: R GUI</text>
+</g>
+<g class="binding" data-row="1" data-col="8" data-action="MT(L, RAlt)" transform="translate(1006 358) rotate(0)">
+<title>Base (1,8): MT(L, RAlt)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">L</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: R Alt</text>
+</g>
+<g class="binding" data-row="1" data-col="9" data-action="MT(Semicolon, RShift)" transform="translate(1086 412) rotate(0)">
+<title>Base (1,9): MT(Semicolon, RShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">;</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">hold: R Shift</text>
+</g>
+<g class="binding" data-row="2" data-col="0" data-action="Z" transform="translate(146 484) rotate(0)">
+<title>Base (2,0): Z</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">Z</text>
+</g>
+<g class="binding" data-row="2" data-col="1" data-action="X" transform="translate(226 430) rotate(0)">
+<title>Base (2,1): X</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">X</text>
+</g>
+<g class="binding" data-row="2" data-col="2" data-action="C" transform="translate(306 412) rotate(0)">
+<title>Base (2,2): C</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">C</text>
+</g>
+<g class="binding" data-row="2" data-col="3" data-action="V" transform="translate(386 430) rotate(0)">
+<title>Base (2,3): V</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">V</text>
+</g>
+<g class="binding" data-row="2" data-col="4" data-action="B" transform="translate(466 448) rotate(0)">
+<title>Base (2,4): B</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">B</text>
+</g>
+<g class="binding" data-row="2" data-col="5" data-action="N" transform="translate(766 448) rotate(0)">
+<title>Base (2,5): N</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">N</text>
+</g>
+<g class="binding" data-row="2" data-col="6" data-action="M" transform="translate(846 430) rotate(0)">
+<title>Base (2,6): M</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">M</text>
+</g>
+<g class="binding" data-row="2" data-col="7" data-action="Comma" transform="translate(926 412) rotate(0)">
+<title>Base (2,7): Comma</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">,</text>
+</g>
+<g class="binding" data-row="2" data-col="8" data-action="Dot" transform="translate(1006 430) rotate(0)">
+<title>Base (2,8): Dot</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">.</text>
+</g>
+<g class="binding" data-row="2" data-col="9" data-action="Slash" transform="translate(1086 484) rotate(0)">
+<title>Base (2,9): Slash</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">/</text>
+</g>
+<g class="binding" data-row="3" data-col="3" data-action="LT(1, Tab, THUMB)" transform="translate(480 523) rotate(15)">
+<title>Base (3,3): LT(1, Tab, THUMB)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">Tab</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">hold: Left</text>
+</g>
+<g class="binding" data-row="3" data-col="4" data-action="Enter" transform="translate(561 558) rotate(30)">
+<title>Base (3,4): Enter</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:20.0px">Enter</text>
+</g>
+<g class="binding" data-row="3" data-col="5" data-action="Space" transform="translate(671 558) rotate(-30)">
+<title>Base (3,5): Space</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:20.0px">Space</text>
+</g>
+<g class="binding" data-row="3" data-col="6" data-action="LT(2, Backspace, THUMB)" transform="translate(752 523) rotate(-15)">
+<title>Base (3,6): LT(2, Backspace, THUMB)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">Bksp</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">hold: Right</text>
+</g>
+</g>
+<g id="layer-1" data-layer="Left">
+<rect x="60" y="632" width="1080" height="464" rx="18" fill="#fff" stroke="#9f9f9f"/>
+<rect x="450" y="648" width="300" height="38" rx="9" fill="#e0f6e0"/>
+<text class="heading" x="600" y="675" fill="#2a5045" style="fill:#2a5045">1 · Left</text>
+<text class="caption dim" x="600" y="708">Hold Tab thumb</text>
+<g class="binding" data-row="0" data-col="0" data-action="WM(1, LShift)" transform="translate(146 826) rotate(0)">
+<title>Left (0,0): WM(1, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">!</text>
+</g>
+<g class="binding" data-row="0" data-col="1" data-action="WM(2, LShift)" transform="translate(226 772) rotate(0)">
+<title>Left (0,1): WM(2, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">@</text>
+</g>
+<g class="binding" data-row="0" data-col="2" data-action="WM(3, LShift)" transform="translate(306 754) rotate(0)">
+<title>Left (0,2): WM(3, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">#</text>
+</g>
+<g class="binding" data-row="0" data-col="3" data-action="WM(4, LShift)" transform="translate(386 772) rotate(0)">
+<title>Left (0,3): WM(4, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">$</text>
+</g>
+<g class="binding" data-row="0" data-col="4" data-action="WM(5, LShift)" transform="translate(466 790) rotate(0)">
+<title>Left (0,4): WM(5, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">%</text>
+</g>
+<g class="binding" data-row="0" data-col="5" data-action="WM(6, LShift)" transform="translate(766 790) rotate(0)">
+<title>Left (0,5): WM(6, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">^</text>
+</g>
+<g class="binding" data-row="0" data-col="6" data-action="WM(7, LShift)" transform="translate(846 772) rotate(0)">
+<title>Left (0,6): WM(7, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">&amp;</text>
+</g>
+<g class="binding" data-row="0" data-col="7" data-action="WM(8, LShift)" transform="translate(926 754) rotate(0)">
+<title>Left (0,7): WM(8, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">*</text>
+</g>
+<g class="binding" data-row="0" data-col="8" data-action="WM(9, LShift)" transform="translate(1006 772) rotate(0)">
+<title>Left (0,8): WM(9, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">(</text>
+</g>
+<g class="binding" data-row="0" data-col="9" data-action="WM(0, LShift)" transform="translate(1086 826) rotate(0)">
+<title>Left (0,9): WM(0, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">)</text>
+</g>
+<g class="binding" data-row="1" data-col="0" data-action="1" transform="translate(146 898) rotate(0)">
+<title>Left (1,0): 1</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">1</text>
+</g>
+<g class="binding" data-row="1" data-col="1" data-action="2" transform="translate(226 844) rotate(0)">
+<title>Left (1,1): 2</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">2</text>
+</g>
+<g class="binding" data-row="1" data-col="2" data-action="3" transform="translate(306 826) rotate(0)">
+<title>Left (1,2): 3</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">3</text>
+</g>
+<g class="binding" data-row="1" data-col="3" data-action="4" transform="translate(386 844) rotate(0)">
+<title>Left (1,3): 4</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">4</text>
+</g>
+<g class="binding" data-row="1" data-col="4" data-action="5" transform="translate(466 862) rotate(0)">
+<title>Left (1,4): 5</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">5</text>
+</g>
+<g class="binding" data-row="1" data-col="5" data-action="6" transform="translate(766 862) rotate(0)">
+<title>Left (1,5): 6</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">6</text>
+</g>
+<g class="binding" data-row="1" data-col="6" data-action="7" transform="translate(846 844) rotate(0)">
+<title>Left (1,6): 7</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">7</text>
+</g>
+<g class="binding" data-row="1" data-col="7" data-action="8" transform="translate(926 826) rotate(0)">
+<title>Left (1,7): 8</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">8</text>
+</g>
+<g class="binding" data-row="1" data-col="8" data-action="9" transform="translate(1006 844) rotate(0)">
+<title>Left (1,8): 9</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">9</text>
+</g>
+<g class="binding" data-row="1" data-col="9" data-action="0" transform="translate(1086 898) rotate(0)">
+<title>Left (1,9): 0</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">0</text>
+</g>
+<g class="binding" data-row="2" data-col="0" data-action="WM(1, LGui)" transform="translate(146 970) rotate(0)">
+<title>Left (2,0): WM(1, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">1</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="1" data-action="WM(2, LGui)" transform="translate(226 916) rotate(0)">
+<title>Left (2,1): WM(2, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">2</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="2" data-action="WM(3, LGui)" transform="translate(306 898) rotate(0)">
+<title>Left (2,2): WM(3, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">3</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="3" data-action="WM(4, LGui)" transform="translate(386 916) rotate(0)">
+<title>Left (2,3): WM(4, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">4</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="4" data-action="WM(5, LGui)" transform="translate(466 934) rotate(0)">
+<title>Left (2,4): WM(5, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">5</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="5" data-action="WM(6, LGui)" transform="translate(766 934) rotate(0)">
+<title>Left (2,5): WM(6, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">6</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="6" data-action="WM(7, LGui)" transform="translate(846 916) rotate(0)">
+<title>Left (2,6): WM(7, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">7</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="7" data-action="WM(8, LGui)" transform="translate(926 898) rotate(0)">
+<title>Left (2,7): WM(8, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">8</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="8" data-action="WM(9, LGui)" transform="translate(1006 916) rotate(0)">
+<title>Left (2,8): WM(9, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">9</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="2" data-col="9" data-action="WM(0, LGui)" transform="translate(1086 970) rotate(0)">
+<title>Left (2,9): WM(0, LGui)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">0</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI</text>
+</g>
+<g class="binding" data-row="3" data-col="3" data-action="_" transform="translate(480 1009) rotate(15)">
+<title>Left (3,3): _; held selector from Base</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#e0f6e0;stroke:#2a5045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">Tab</text>
+<text class="flag" x="0" y="-18" style="fill:#2a5045">HELD</text>
+<text class="sub" x="0" y="22" style="fill:#2a5045" textLength="64" lengthAdjust="spacingAndGlyphs">Left</text>
+</g>
+<g class="binding" data-row="3" data-col="4" data-action="_" transform="translate(561 1044) rotate(30)">
+<title>Left (3,4): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+<g class="binding" data-row="3" data-col="5" data-action="_" transform="translate(671 1044) rotate(-30)">
+<title>Left (3,5): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+<g class="binding" data-row="3" data-col="6" data-action="_" transform="translate(752 1009) rotate(-15)">
+<title>Left (3,6): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+</g>
+<g id="layer-2" data-layer="Right">
+<rect x="60" y="1118" width="1080" height="464" rx="18" fill="#fff" stroke="#9f9f9f"/>
+<rect x="450" y="1134" width="300" height="38" rx="9" fill="#ecedff"/>
+<text class="heading" x="600" y="1161" fill="#003497" style="fill:#003497">2 · Right</text>
+<text class="caption dim" x="600" y="1194">Hold Bksp thumb</text>
+<g class="binding" data-row="0" data-col="0" data-action="RightBracket" transform="translate(146 1312) rotate(0)">
+<title>Right (0,0): RightBracket</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">]</text>
+</g>
+<g class="binding" data-row="0" data-col="1" data-action="WM(RightBracket, LShift)" transform="translate(226 1258) rotate(0)">
+<title>Right (0,1): WM(RightBracket, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">}</text>
+</g>
+<g class="binding" data-row="0" data-col="2" data-action="WM(0, LShift)" transform="translate(306 1240) rotate(0)">
+<title>Right (0,2): WM(0, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">)</text>
+</g>
+<g class="binding" data-row="0" data-col="3" data-action="WM(Dot, LShift)" transform="translate(386 1258) rotate(0)">
+<title>Right (0,3): WM(Dot, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">&gt;</text>
+</g>
+<g class="binding" data-row="0" data-col="4" data-action="PrintScreen" transform="translate(466 1276) rotate(0)">
+<title>Right (0,4): PrintScreen</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:14.3px">Prt Scr</text>
+</g>
+<g class="binding" data-row="0" data-col="5" data-action="Insert" transform="translate(766 1276) rotate(0)">
+<title>Right (0,5): Insert</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:16.7px">Insert</text>
+</g>
+<g class="binding" data-row="0" data-col="6" data-action="Home" transform="translate(846 1258) rotate(0)">
+<title>Right (0,6): Home</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">Home</text>
+</g>
+<g class="binding" data-row="0" data-col="7" data-action="PageUp" transform="translate(926 1240) rotate(0)">
+<title>Right (0,7): PageUp</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:20.0px">Pg Up</text>
+</g>
+<g class="binding" data-row="0" data-col="8" data-action="PageDown" transform="translate(1006 1258) rotate(0)">
+<title>Right (0,8): PageDown</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:20.0px">Pg Dn</text>
+</g>
+<g class="binding" data-row="0" data-col="9" data-action="End" transform="translate(1086 1312) rotate(0)">
+<title>Right (0,9): End</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">End</text>
+</g>
+<g class="binding" data-row="1" data-col="0" data-action="LeftBracket" transform="translate(146 1384) rotate(0)">
+<title>Right (1,0): LeftBracket</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">[</text>
+</g>
+<g class="binding" data-row="1" data-col="1" data-action="WM(LeftBracket, LShift)" transform="translate(226 1330) rotate(0)">
+<title>Right (1,1): WM(LeftBracket, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">{</text>
+</g>
+<g class="binding" data-row="1" data-col="2" data-action="WM(9, LShift)" transform="translate(306 1312) rotate(0)">
+<title>Right (1,2): WM(9, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">(</text>
+</g>
+<g class="binding" data-row="1" data-col="3" data-action="WM(Comma, LShift)" transform="translate(386 1330) rotate(0)">
+<title>Right (1,3): WM(Comma, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">&lt;</text>
+</g>
+<g class="binding" data-row="1" data-col="4" data-action="_" transform="translate(466 1348) rotate(0)">
+<title>Right (1,4): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+<g class="binding" data-row="1" data-col="5" data-action="Delete" transform="translate(766 1348) rotate(0)">
+<title>Right (1,5): Delete</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">Del</text>
+</g>
+<g class="binding" data-row="1" data-col="6" data-action="Left" transform="translate(846 1330) rotate(0)">
+<title>Right (1,6): Left</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">←</text>
+</g>
+<g class="binding" data-row="1" data-col="7" data-action="Up" transform="translate(926 1312) rotate(0)">
+<title>Right (1,7): Up</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">↑</text>
+</g>
+<g class="binding" data-row="1" data-col="8" data-action="Down" transform="translate(1006 1330) rotate(0)">
+<title>Right (1,8): Down</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">↓</text>
+</g>
+<g class="binding" data-row="1" data-col="9" data-action="Right" transform="translate(1086 1384) rotate(0)">
+<title>Right (1,9): Right</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">→</text>
+</g>
+<g class="binding" data-row="2" data-col="0" data-action="Grave" transform="translate(146 1456) rotate(0)">
+<title>Right (2,0): Grave</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">`</text>
+</g>
+<g class="binding" data-row="2" data-col="1" data-action="Minus" transform="translate(226 1402) rotate(0)">
+<title>Right (2,1): Minus</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">-</text>
+</g>
+<g class="binding" data-row="2" data-col="2" data-action="Equal" transform="translate(306 1384) rotate(0)">
+<title>Right (2,2): Equal</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">=</text>
+</g>
+<g class="binding" data-row="2" data-col="3" data-action="Quote" transform="translate(386 1402) rotate(0)">
+<title>Right (2,3): Quote</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">&#x27;</text>
+</g>
+<g class="binding" data-row="2" data-col="4" data-action="Backslash" transform="translate(466 1420) rotate(0)">
+<title>Right (2,4): Backslash</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">\</text>
+</g>
+<g class="binding" data-row="2" data-col="5" data-action="WM(Backslash, LShift)" transform="translate(766 1420) rotate(0)">
+<title>Right (2,5): WM(Backslash, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">|</text>
+</g>
+<g class="binding" data-row="2" data-col="6" data-action="WM(Quote, LShift)" transform="translate(846 1402) rotate(0)">
+<title>Right (2,6): WM(Quote, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">&quot;</text>
+</g>
+<g class="binding" data-row="2" data-col="7" data-action="WM(Equal, LShift)" transform="translate(926 1384) rotate(0)">
+<title>Right (2,7): WM(Equal, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">+</text>
+</g>
+<g class="binding" data-row="2" data-col="8" data-action="WM(Minus, LShift)" transform="translate(1006 1402) rotate(0)">
+<title>Right (2,8): WM(Minus, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">_</text>
+</g>
+<g class="binding" data-row="2" data-col="9" data-action="WM(Grave, LShift)" transform="translate(1086 1456) rotate(0)">
+<title>Right (2,9): WM(Grave, LShift)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">~</text>
+</g>
+<g class="binding" data-row="3" data-col="3" data-action="_" transform="translate(480 1495) rotate(15)">
+<title>Right (3,3): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+<g class="binding" data-row="3" data-col="4" data-action="_" transform="translate(561 1530) rotate(30)">
+<title>Right (3,4): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+<g class="binding" data-row="3" data-col="5" data-action="RCtrl" transform="translate(671 1530) rotate(-30)">
+<title>Right (3,5): RCtrl</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="7" style="font-size:16.7px">R Ctrl</text>
+</g>
+<g class="binding" data-row="3" data-col="6" data-action="_" transform="translate(752 1495) rotate(-15)">
+<title>Right (3,6): _; held selector from Base</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">Bksp</text>
+<text class="flag" x="0" y="-18" style="fill:#003497">HELD</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">Right</text>
+</g>
+</g>
+<g id="layer-3" data-layer="Tri">
+<rect x="60" y="1604" width="1080" height="464" rx="18" fill="#fff" stroke="#9f9f9f"/>
+<rect x="450" y="1620" width="300" height="38" rx="9" fill="#f8e6f5"/>
+<text class="heading" x="600" y="1647" fill="#721045" style="fill:#721045">3 · Tri</text>
+<text class="caption dim" x="600" y="1680">Hold Tab + Bksp thumbs</text>
+<g class="binding" data-row="0" data-col="0" data-action="WM(L, LGui | LCtrl)" transform="translate(146 1798) rotate(0)">
+<title>Tri (0,0): WM(L, LGui | LCtrl)</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8e6f5;stroke:#721045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">L</text>
+<text class="sub" x="0" y="22" style="fill:#721045" textLength="64" lengthAdjust="spacingAndGlyphs">GUI + Ctrl</text>
+</g>
+<g class="binding" data-row="0" data-col="1" data-action="No" transform="translate(226 1744) rotate(0)">
+<title>Tri (0,1): No</title>
+<rect class="disabled" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">—</text>
+</g>
+<g class="binding" data-row="0" data-col="2" data-action="No" transform="translate(306 1726) rotate(0)">
+<title>Tri (0,2): No</title>
+<rect class="disabled" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">—</text>
+</g>
+<g class="binding" data-row="0" data-col="3" data-action="Reboot" transform="translate(386 1744) rotate(0)">
+<title>Tri (0,3): Reboot</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:16.7px">Reboot</text>
+</g>
+<g class="binding" data-row="0" data-col="4" data-action="User0" transform="translate(466 1762) rotate(0)">
+<title>Tri (0,4): User0</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">BT 0</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">profile</text>
+</g>
+<g class="binding" data-row="0" data-col="5" data-action="User3" transform="translate(766 1762) rotate(0)">
+<title>Tri (0,5): User3</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">BT 3</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">profile</text>
+</g>
+<g class="binding" data-row="0" data-col="6" data-action="F1" transform="translate(846 1744) rotate(0)">
+<title>Tri (0,6): F1</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F1</text>
+</g>
+<g class="binding" data-row="0" data-col="7" data-action="F2" transform="translate(926 1726) rotate(0)">
+<title>Tri (0,7): F2</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F2</text>
+</g>
+<g class="binding" data-row="0" data-col="8" data-action="F3" transform="translate(1006 1744) rotate(0)">
+<title>Tri (0,8): F3</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F3</text>
+</g>
+<g class="binding" data-row="0" data-col="9" data-action="F4" transform="translate(1086 1798) rotate(0)">
+<title>Tri (0,9): F4</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F4</text>
+</g>
+<g class="binding" data-row="1" data-col="0" data-action="LAlt" transform="translate(146 1870) rotate(0)">
+<title>Tri (1,0): LAlt</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="7" style="font-size:20.0px">L Alt</text>
+</g>
+<g class="binding" data-row="1" data-col="1" data-action="LCtrl" transform="translate(226 1816) rotate(0)">
+<title>Tri (1,1): LCtrl</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="7" style="font-size:16.7px">L Ctrl</text>
+</g>
+<g class="binding" data-row="1" data-col="2" data-action="No" transform="translate(306 1798) rotate(0)">
+<title>Tri (1,2): No</title>
+<rect class="disabled" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">—</text>
+</g>
+<g class="binding" data-row="1" data-col="3" data-action="Bootloader" transform="translate(386 1816) rotate(0)">
+<title>Tri (1,3): Bootloader</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">Boot</text>
+</g>
+<g class="binding" data-row="1" data-col="4" data-action="User1" transform="translate(466 1834) rotate(0)">
+<title>Tri (1,4): User1</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">BT 1</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">profile</text>
+</g>
+<g class="binding" data-row="1" data-col="5" data-action="User4" transform="translate(766 1834) rotate(0)">
+<title>Tri (1,5): User4</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">BT 4</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">profile</text>
+</g>
+<g class="binding" data-row="1" data-col="6" data-action="F5" transform="translate(846 1816) rotate(0)">
+<title>Tri (1,6): F5</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F5</text>
+</g>
+<g class="binding" data-row="1" data-col="7" data-action="F6" transform="translate(926 1798) rotate(0)">
+<title>Tri (1,7): F6</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F6</text>
+</g>
+<g class="binding" data-row="1" data-col="8" data-action="F7" transform="translate(1006 1816) rotate(0)">
+<title>Tri (1,8): F7</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F7</text>
+</g>
+<g class="binding" data-row="1" data-col="9" data-action="F8" transform="translate(1086 1870) rotate(0)">
+<title>Tri (1,9): F8</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F8</text>
+</g>
+<g class="binding" data-row="2" data-col="0" data-action="No" transform="translate(146 1942) rotate(0)">
+<title>Tri (2,0): No</title>
+<rect class="disabled" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">—</text>
+</g>
+<g class="binding" data-row="2" data-col="1" data-action="No" transform="translate(226 1888) rotate(0)">
+<title>Tri (2,1): No</title>
+<rect class="disabled" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">—</text>
+</g>
+<g class="binding" data-row="2" data-col="2" data-action="No" transform="translate(306 1870) rotate(0)">
+<title>Tri (2,2): No</title>
+<rect class="disabled" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">—</text>
+</g>
+<g class="binding" data-row="2" data-col="3" data-action="User8" transform="translate(386 1888) rotate(0)">
+<title>Tri (2,3): User8</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:12.5px">Clear BT</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">bond</text>
+</g>
+<g class="binding" data-row="2" data-col="4" data-action="User2" transform="translate(466 1906) rotate(0)">
+<title>Tri (2,4): User2</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">BT 2</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">profile</text>
+</g>
+<g class="binding" data-row="2" data-col="5" data-action="User5" transform="translate(766 1906) rotate(0)">
+<title>Tri (2,5): User5</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#ecedff;stroke:#003497;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">BT 5</text>
+<text class="sub" x="0" y="22" style="fill:#003497" textLength="64" lengthAdjust="spacingAndGlyphs">profile</text>
+</g>
+<g class="binding" data-row="2" data-col="6" data-action="F9" transform="translate(846 1888) rotate(0)">
+<title>Tri (2,6): F9</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F9</text>
+</g>
+<g class="binding" data-row="2" data-col="7" data-action="F10" transform="translate(926 1870) rotate(0)">
+<title>Tri (2,7): F10</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F10</text>
+</g>
+<g class="binding" data-row="2" data-col="8" data-action="F11" transform="translate(1006 1888) rotate(0)">
+<title>Tri (2,8): F11</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F11</text>
+</g>
+<g class="binding" data-row="2" data-col="9" data-action="F12" transform="translate(1086 1942) rotate(0)">
+<title>Tri (2,9): F12</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">F12</text>
+</g>
+<g class="binding" data-row="3" data-col="3" data-action="_" transform="translate(480 1981) rotate(15)">
+<title>Tri (3,3): _; held selector from Base</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8e6f5;stroke:#721045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">Tab</text>
+<text class="flag" x="0" y="-18" style="fill:#721045">HELD</text>
+<text class="sub" x="0" y="22" style="fill:#721045" textLength="64" lengthAdjust="spacingAndGlyphs">Left</text>
+</g>
+<g class="binding" data-row="3" data-col="4" data-action="_" transform="translate(561 2016) rotate(30)">
+<title>Tri (3,4): _</title>
+<rect class="transparent" x="-36" y="-32" width="72" height="64" rx="8"/>
+<text class="main" x="0" y="7" style="font-size:21.0px">▽</text>
+</g>
+<g class="binding" data-row="3" data-col="5" data-action="_" transform="translate(671 2016) rotate(-30)">
+<title>Tri (3,5): _; inherits RCtrl from Right</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8f0d0;stroke:#624416;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:16.7px">R Ctrl</text>
+<text class="sub" x="0" y="22" style="fill:#624416" textLength="64" lengthAdjust="spacingAndGlyphs">from Right</text>
+</g>
+<g class="binding" data-row="3" data-col="6" data-action="_" transform="translate(752 1981) rotate(-15)">
+<title>Tri (3,6): _; held selector from Base</title>
+<rect class="key" x="-36" y="-32" width="72" height="64" rx="8" style="fill:#f8e6f5;stroke:#721045;stroke-width:1.7"/>
+<text class="main" x="0" y="1" style="font-size:21.0px">Bksp</text>
+<text class="flag" x="0" y="-18" style="fill:#721045">HELD</text>
+<text class="sub" x="0" y="22" style="fill:#721045" textLength="64" lengthAdjust="spacingAndGlyphs">Right</text>
+</g>
+</g>
+<text class="legend" x="600" y="2102">Tri: hold Tab + Bksp. Thumb combos (50 ms): left pair = Esc · right pair = Del.</text>
+<text class="caption dim" x="600" y="2132">Inner thumbs = Caps Word: Enter + Space (Enter + R Ctrl on Right / Tri).</text>
+<text class="caption dim" x="600" y="2168">HELD marks a selector. Small chord labels are simultaneous modifiers. BT 0–5 select profiles; Clear BT forgets the active bond.</text>
+<text class="caption dim" x="600" y="2200">Source: keyboard.toml · schematic placement · Modus Operandi palette</text>
+</svg>

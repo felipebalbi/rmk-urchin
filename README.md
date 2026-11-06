@@ -11,6 +11,12 @@ the shared display implementation lives in `src/screen.rs`, `src/screen/`,
 
 ## Keymap
 
+![Urchin keymap with all four layers, tap/hold legends, and thumb combos](assets/keymap.svg)
+
+The diagram shows the compiled defaults in `keyboard.toml`, using schematic
+34-key placement and US symbol legends. Regenerate it with
+`python3 assets/generate-keymap.py` (Python 3.11 or newer).
+
 The base layer is QWERTY with home-row Shift/Alt/GUI/Ctrl modifiers.
 Left (1) provides numbers and shortcuts, Right (2) symbols and navigation,
 and Tri (3) function keys, Bluetooth controls, reboot, and bootloader access.

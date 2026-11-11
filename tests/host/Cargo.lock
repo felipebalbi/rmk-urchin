@@ -1131,7 +1131,7 @@ dependencies = [
 [[package]]
 name = "rmk"
 version = "0.9.0"
-source = "git+https://github.com/felipebalbi/rmk.git?rev=a5575a592094a0326a10a3897c6b8fc9a28acab7#a5575a592094a0326a10a3897c6b8fc9a28acab7"
+source = "git+https://github.com/felipebalbi/rmk.git?rev=18300680e2f16046643b9f8151abae891df998a4#18300680e2f16046643b9f8151abae891df998a4"
 dependencies = [
  "cortex-m",
  "document-features",
@@ -1159,7 +1159,7 @@ dependencies = [
 [[package]]
 name = "rmk-config"
 version = "0.8.0"
-source = "git+https://github.com/felipebalbi/rmk.git?rev=a5575a592094a0326a10a3897c6b8fc9a28acab7#a5575a592094a0326a10a3897c6b8fc9a28acab7"
+source = "git+https://github.com/felipebalbi/rmk.git?rev=18300680e2f16046643b9f8151abae891df998a4#18300680e2f16046643b9f8151abae891df998a4"
 dependencies = [
  "config",
  "miniz_oxide",
@@ -1176,7 +1176,7 @@ dependencies = [
 [[package]]
 name = "rmk-macro"
 version = "0.8.0"
-source = "git+https://github.com/felipebalbi/rmk.git?rev=a5575a592094a0326a10a3897c6b8fc9a28acab7#a5575a592094a0326a10a3897c6b8fc9a28acab7"
+source = "git+https://github.com/felipebalbi/rmk.git?rev=18300680e2f16046643b9f8151abae891df998a4#18300680e2f16046643b9f8151abae891df998a4"
 dependencies = [
  "cargo_toml",
  "darling 0.24.1",
@@ -1192,7 +1192,7 @@ dependencies = [
 [[package]]
 name = "rmk-types"
 version = "0.4.0"
-source = "git+https://github.com/felipebalbi/rmk.git?rev=a5575a592094a0326a10a3897c6b8fc9a28acab7#a5575a592094a0326a10a3897c6b8fc9a28acab7"
+source = "git+https://github.com/felipebalbi/rmk.git?rev=18300680e2f16046643b9f8151abae891df998a4#18300680e2f16046643b9f8151abae891df998a4"
 dependencies = [
  "bitfield-struct",
  "heapless 0.9.3",

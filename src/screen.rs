@@ -218,13 +218,22 @@ impl ScreenState {
                 let _ = text.push_str("Base");
             }
             1 => {
-                let _ = text.push_str("Left");
+                let _ = text.push_str("Nav");
             }
             2 => {
-                let _ = text.push_str("Right");
+                let _ = text.push_str("Mouse");
             }
             3 => {
-                let _ = text.push_str("Tri");
+                let _ = text.push_str("Media");
+            }
+            4 => {
+                let _ = text.push_str("Num");
+            }
+            5 => {
+                let _ = text.push_str("Sym");
+            }
+            6 => {
+                let _ = text.push_str("Fun");
             }
             layer => {
                 let _ = write!(text, "Layer {}", layer);

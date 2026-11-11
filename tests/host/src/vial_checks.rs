@@ -29,10 +29,38 @@ fn vial_exposes_every_urchin_switch_exactly_once() {
         }
     }
 
-    // Three ten-key finger rows plus Tab/Left, Enter, Space, Backspace/Right.
+    // Three ten-key finger rows plus Tab/Mouse, Enter/Nav, Space/Num, Backspace/Sym.
     let expected: BTreeSet<_> = (0..3)
         .flat_map(|row| (0..10).map(move |col| (row, col)))
         .chain([(3, 3), (3, 4), (3, 5), (3, 6)])
         .collect();
     assert_eq!(switches, expected, "Vial layout must cover all 34 switches");
+}
+
+#[test]
+fn vial_user_slots_match_the_four_profile_firmware_actions() {
+    let definition: Value = serde_json::from_str(include_str!("../../../vial.json")).unwrap();
+    let names: Vec<_> = definition["customKeycodes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|code| code["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        names,
+        [
+            "BT0", "BT1", "BT2", "BT3", "NEXT_BT", "PREV_BT", "CLR_BT", "SWITCH"
+        ]
+    );
+}
+
+#[test]
+fn vial_unlock_challenge_uses_both_inner_physical_thumbs() {
+    let config = rmk_config::KeyboardTomlConfig::new_from_toml_path(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../keyboard.toml"
+    ));
+    let host = config.host();
+    assert!(!host.insecure);
+    assert_eq!(host.unlock_keys, [[3, 4], [3, 5]]);
 }

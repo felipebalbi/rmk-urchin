@@ -13,11 +13,13 @@ map = """
 (0,0,L) (0,1,L) (0,2,L) (0,3,L) (0,4,L) (0,5,R) (0,6,R) (0,7,R) (0,8,R) (0,9,R)
 (1,0,L) (1,1,L) (1,2,L) (1,3,L) (1,4,L) (1,5,R) (1,6,R) (1,7,R) (1,8,R) (1,9,R)
 (2,0,L) (2,1,L) (2,2,L) (2,3,L) (2,4,L) (2,5,R) (2,6,R) (2,7,R) (2,8,R) (2,9,R)
-(3,0,L) (3,1,L) (3,2,L) (3,3,L) (3,4,L) (3,5,R) (3,6,R) (3,7,R) (3,8,R) (3,9,R)
+                        (3,3,L) (3,4,L) (3,5,R) (3,6,R)
 """
 
 [keymap]
-layers = 4
+layers = 7
+# REMAKE's QWERTY Miryoku layers, adapted to two physical thumbs per hand.
+# Each same-hand thumb chord replaces its missing tertiary thumb on every layer.
 
 [[keymap.layer]]
 name = "Base"
@@ -25,46 +27,77 @@ keys = """
 Q             W            E            R             T       Y       U                 I            O            P
 MT(A, LShift) MT(S, LAlt)  MT(D, LGui)  MT(F, LCtrl)  G       H       MT(J, RCtrl)      MT(K, RGui)  MT(L, RAlt)  MT(Semicolon, RShift)
 Z             X            C            V             B       N       M                 Comma        Dot          Slash
-_             _            _            LT(1, Tab, THUMB) Enter   Space   LT(2, Backspace, THUMB) _         _            _
+                           LT(2, Tab, THUMB) LT(1, Enter, THUMB) LT(4, Space, THUMB) LT(5, Backspace, THUMB)
 """
 
 [[keymap.layer]]
-name = "Left"
+name = "Nav"
 keys = """
-WM(1, LShift) WM(2, LShift) WM(3, LShift) WM(4, LShift) WM(5, LShift) WM(6, LShift) WM(7, LShift) WM(8, LShift) WM(9, LShift) WM(0, LShift)
-1             2             3             4             5             6             7             8             9             0
-WM(1, LGui)   WM(2, LGui)   WM(3, LGui)   WM(4, LGui)   WM(5, LGui)   WM(6, LGui)   WM(7, LGui)   WM(8, LGui)   WM(9, LGui)   WM(0, LGui)
-_             _             _             _             _             _             _             _             _             _
+TD(0)  No   No   No    No  WM(Y, LCtrl)    WM(Insert, LShift) WM(Insert, LCtrl) WM(Delete, LShift) Undo
+LShift LAlt LGui LCtrl No  CapsWordToggle Left               Down              Up                 Right
+No     No   No   No    No  Insert         Home               PageDown          PageUp             End
+                 No No Space Backspace
 """
 
 [[keymap.layer]]
-name = "Right"
+name = "Mouse"
 keys = """
-RightBracket WM(RightBracket, LShift) WM(0, LShift) WM(Dot, LShift)   PrintScreen Insert                 Home               PageUp             PageDown           End
-LeftBracket  WM(LeftBracket, LShift)  WM(9, LShift) WM(Comma, LShift) _           Delete                 Left               Up                 Down               Right
-Grave        Minus                    Equal         Quote             Backslash   WM(Backslash, LShift)  WM(Quote, LShift)  WM(Equal, LShift)  WM(Minus, LShift)  WM(Grave, LShift)
-_            _                        _             _                 _           RCtrl                  _                  _                  _                  _
+TD(0)  No   No   No    No  WM(Y, LCtrl) WM(Insert, LShift) WM(Insert, LCtrl) WM(Delete, LShift) Undo
+LShift LAlt LGui LCtrl No  No       MouseLeft          MouseDown         MouseUp            MouseRight
+No     No   No   No    No  No       MouseWheelLeft     MouseWheelDown    MouseWheelUp       MouseWheelRight
+                 No No MouseBtn1 MouseBtn2
 """
 
 [[keymap.layer]]
-name = "Tri"
+name = "Media"
 keys = """
-WM(L, LGui | LCtrl) No     No  Reboot      User0  User3  F1  F2   F3   F4
-LAlt               LCtrl  No  Bootloader  User1  User4  F5  F6   F7   F8
-No                 No     No  User8       User2  User5  F9  F10  F11  F12
-_                  _      _   _           _      _      _   _    _    _
+TD(0)  No   No   No    No  No    No             No           No         No
+LShift LAlt LGui LCtrl No  No    MediaPrevTrack AudioVolDown AudioVolUp MediaNextTrack
+No     No   No   No    No  User7 User0          User1        User2      User3
+                 No No MediaPlayPause MediaStop
+"""
+
+[[keymap.layer]]
+name = "Num"
+keys = """
+LeftBracket 7 8 9 RightBracket No No    No   No   TD(0)
+Quote       4 5 6 Equal        No RCtrl RGui RAlt RShift
+Grave       1 2 3 Backslash    No No    No   No   No
+              Minus 0 No No
+"""
+
+[[keymap.layer]]
+name = "Sym"
+keys = """
+WM(LeftBracket, LShift) WM(7, LShift) WM(8, LShift) WM(9, LShift) WM(RightBracket, LShift) No No    No   No   TD(0)
+WM(Quote, LShift)       WM(4, LShift) WM(5, LShift) WM(6, LShift) WM(Equal, LShift)        No RCtrl RGui RAlt RShift
+WM(Grave, LShift)       WM(1, LShift) WM(2, LShift) WM(3, LShift) WM(Backslash, LShift)    No No    No   No   No
+                                    WM(Minus, LShift) WM(0, LShift) No No
+"""
+
+[[keymap.layer]]
+name = "Fun"
+keys = """
+F12 F7 F8 F9 PrintScreen No No    No   No   TD(0)
+F11 F4 F5 F6 ScrollLock  No RCtrl RGui RAlt RShift
+F10 F1 F2 F3 Pause       No No    No   No   No
+        Tab Enter No No
 """
 
 [rmk]
 # Match ZMK's 5ms press/release debounce.
 debounce_time = 5
-# The number of available BLE profiles
-ble_profiles_num = 6
+# Miryoku's BT0..BT3. User7 is the USB/BLE toggle with this profile count.
+ble_profiles_num = 4
 # enable sleep
 split_central_sleep_timeout_seconds = 30
 
 [ble]
 enabled = true
+
+[host]
+# Both inner thumbs (Enter + Space), on real switches rather than empty slots.
+unlock_keys = [[3, 4], [3, 5]]
 
 [event.battery_status]
 channel_size = 2
@@ -92,9 +125,6 @@ channel_size = 1
 pubs = 1
 subs = 1
 
-[behavior]
-tri_layer = { upper = 1, lower = 2, adjust = 3 }
-
 [behavior.morse]
 # Home-row mods: opposite-hand chords hold; same-hand rolls tap.
 permissive_hold = true
@@ -111,19 +141,32 @@ quick_tap_timeout = "0ms"
 [behavior.morse.profiles]
 # Thumb layer-taps use the same 200ms timeout, without home-row chord rules.
 THUMB = { normal_mode = true, unilateral_tap = false }
+# Combo outputs use RMK's synthetic-event path, not physical ordered tap/hold.
+# Resolve on another press so early Media/Fun keys cannot leak onto Base.
+CHORD = { hold_on_other_press = true, unilateral_tap = false }
+BOOT = { normal_mode = true, unilateral_tap = false, gap_timeout = "200ms" }
+
+[[behavior.morse.morses]]
+# Hold a layer thumb/chord, then double-tap the same-hand top-row pinkie.
+tap = "No"
+hold = "No"
+double_tap = "Bootloader"
+hold_after_tap = "No"
+profile = "BOOT"
 
 [behavior.combo]
 timeout = "50ms"
 combos = [
-    # Both left thumbs: Escape.
-    { actions = ["LT(1, Tab, THUMB)", "Enter"], output = "Escape" },
-    # Both right thumbs: Delete.
-    { actions = ["Space", "LT(2, Backspace, THUMB)"], output = "Delete" },
-    # Inner thumbs: Caps Word.
-    { actions = ["Enter", "Space"], output = "CapsWordToggle" },
-    # The right layer (also inherited by Tri) replaces Space with RCtrl.
-    { actions = ["RCtrl", "LT(2, Backspace, THUMB)"], output = "Delete" },
-    { actions = ["Enter", "RCtrl"], output = "CapsWordToggle" },
+    # Base: tertiary tap AND hold, with no individual thumb actions leaking.
+    { actions = ["LT(2, Tab, THUMB)", "LT(1, Enter, THUMB)"], output = "LT(3, Escape, CHORD)", layer = 0 },
+    { actions = ["LT(4, Space, THUMB)", "LT(5, Backspace, THUMB)"], output = "LT(6, Delete, CHORD)", layer = 0 },
+    # Opposite-hand sublayers retain each missing tertiary thumb's function.
+    { actions = ["Space", "Backspace"], output = "Delete", layer = 1 },
+    { actions = ["MouseBtn1", "MouseBtn2"], output = "MouseBtn3", layer = 2 },
+    { actions = ["MediaPlayPause", "MediaStop"], output = "AudioMute", layer = 3 },
+    { actions = ["Minus", "0"], output = "Dot", layer = 4 },
+    { actions = ["WM(Minus, LShift)", "WM(0, LShift)"], output = "WM(9, LShift)", layer = 5 },
+    { actions = ["Tab", "Enter"], output = "Application", layer = 6 },
 ]
 
 [split]

@@ -22,7 +22,7 @@ use std::{
     task::{Context, Poll},
 };
 
-fn profile(p: &rmk_config::resolved::behavior::MorseProfile) -> MorseProfile {
+pub(crate) fn profile(p: &rmk_config::resolved::behavior::MorseProfile) -> MorseProfile {
     let mode = if p.permissive_hold == Some(true) {
         Some(MorseMode::PermissiveHold)
     } else if p.hold_on_other_press == Some(true) {

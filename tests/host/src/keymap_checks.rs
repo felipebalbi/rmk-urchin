@@ -290,12 +290,12 @@ fn tertiary_chord_holds_reach_media_and_fun_without_tap_leaks() {
 }
 
 #[test]
-fn four_physical_thumbs_keep_taps_and_reach_primary_secondary_layers() {
+fn four_physical_thumbs_match_remake_taps_and_primary_secondary_layers() {
     for (col, tap, layer, row, keycol, key, mods) in [
-        (3, K::Tab, 2, 0, 9, K::Undo, 0),
-        (4, K::Enter, 1, 1, 6, K::Left, 0),
-        (5, K::Space, 4, 1, 0, K::Quote, 0),
-        (6, K::Backspace, 5, 1, 0, K::Quote, 2),
+        (3, K::Enter, 1, 1, 6, K::Left, 0),
+        (4, K::Tab, 2, 0, 9, K::Undo, 0),
+        (5, K::Backspace, 5, 1, 0, K::Quote, 2),
+        (6, K::Space, 4, 1, 0, K::Quote, 0),
     ] {
         let t = sequence(&[(0, 3, col, true), (80, 3, col, false)]);
         assert_eq!(t.keys, [(tap, 0)]);
@@ -313,11 +313,68 @@ fn four_physical_thumbs_keep_taps_and_reach_primary_secondary_layers() {
 }
 
 #[test]
+fn opposite_hand_thumb_positions_match_remake_on_every_sublayer() {
+    // REMAKE's middle/inner left thumbs and inner/middle right thumbs,
+    // omitting only the two tertiary switches replaced by our chords.
+    for (selectors, col, key, mods, media, button) in [
+        ([3, 3], 5, Some(K::Backspace), 0, None, None),
+        ([3, 3], 6, Some(K::Space), 0, None, None),
+        ([4, 4], 5, None, 0, None, Some(2)),
+        ([4, 4], 6, None, 0, None, Some(1)),
+        ([3, 4], 5, None, 0, Some(0xb7), None),
+        ([3, 4], 6, None, 0, Some(0xcd), None),
+        ([6, 6], 3, Some(K::Kc0), 0, None, None),
+        ([6, 6], 4, Some(K::Minus), 0, None, None),
+        ([5, 5], 3, Some(K::Kc0), 2, None, None),
+        ([5, 5], 4, Some(K::Minus), 2, None, None),
+        ([5, 6], 3, Some(K::Enter), 0, None, None),
+        ([5, 6], 4, Some(K::Tab), 0, None, None),
+    ] {
+        let [first, second] = selectors;
+        let mut events = vec![(0, 3, first, true)];
+        if first != second {
+            events.push((20, 3, second, true));
+        }
+        events.extend([
+            (250, 3, col, true),
+            (320, 3, col, false),
+            (400, 3, first, false),
+        ]);
+        if first != second {
+            events.push((420, 3, second, false));
+        }
+        let t = sequence(&events);
+        assert_eq!(
+            t.keys,
+            key.map(|k| (k, mods)).into_iter().collect::<Vec<_>>(),
+            "{t:?}"
+        );
+        assert_eq!(
+            t.media,
+            media
+                .into_iter()
+                .flat_map(|usage| [usage, 0])
+                .collect::<Vec<_>>(),
+            "{t:?}"
+        );
+        assert_eq!(
+            t.buttons,
+            button
+                .into_iter()
+                .flat_map(|mask| [mask, 0])
+                .collect::<Vec<_>>(),
+            "{t:?}"
+        );
+        released(&t);
+    }
+}
+
+#[test]
 fn opposite_hand_tertiary_actions_survive_on_sublayers() {
     // Left chord: Num dot, Sym open parenthesis, Fun Menu.
     for (selector, key, mods, chord) in [
-        (5, K::Dot, 0, false),
-        (6, K::Kc9, 2, false),
+        (6, K::Dot, 0, false),
+        (5, K::Kc9, 2, false),
         (5, K::Application, 0, true),
     ] {
         let mut events = vec![(0, 3, selector, true)];
@@ -340,8 +397,8 @@ fn opposite_hand_tertiary_actions_survive_on_sublayers() {
     }
     // Right chord: Nav Delete, Mouse middle button, Media mute.
     for (selector, key, media, button, chord) in [
-        (4, Some(K::Delete), None, None, false),
-        (3, None, None, Some(4), false),
+        (3, Some(K::Delete), None, None, false),
+        (4, None, None, Some(4), false),
         (3, None, Some(0xe2), None, true),
     ] {
         let mut events = vec![(0, 3, selector, true)];
@@ -377,8 +434,8 @@ fn opposite_hand_tertiary_actions_survive_on_sublayers() {
 #[test]
 fn combo_window_separates_tertiary_chords_from_individual_thumb_rolls() {
     for (a, b, tap_a, tap_b, tertiary) in [
-        (3, 4, K::Tab, K::Enter, K::Escape),
-        (5, 6, K::Space, K::Backspace, K::Delete),
+        (3, 4, K::Enter, K::Tab, K::Escape),
+        (5, 6, K::Backspace, K::Space, K::Delete),
     ] {
         for (first, second, first_tap, second_tap) in [(a, b, tap_a, tap_b), (b, a, tap_b, tap_a)] {
             let t = sequence(&[
@@ -409,9 +466,9 @@ fn combo_window_separates_tertiary_chords_from_individual_thumb_rolls() {
 fn early_keys_wait_for_primary_secondary_and_tertiary_layer_holds() {
     // Key-down/up before the 200ms timeout must not escape onto Base.
     for (first, second, row, col, key, mods) in [
-        (4, None, 1, 6, K::Left, 0),
-        (5, None, 1, 0, K::Quote, 0),
-        (6, None, 1, 0, K::Quote, 2),
+        (3, None, 1, 6, K::Left, 0),
+        (6, None, 1, 0, K::Quote, 0),
+        (5, None, 1, 0, K::Quote, 2),
         (5, Some(6), 2, 1, K::F1, 0),
     ] {
         let mut events = vec![(0, 3, first, true)];
@@ -433,22 +490,22 @@ fn early_keys_wait_for_primary_secondary_and_tertiary_layer_holds() {
 }
 
 #[test]
-fn caps_word_is_on_nav_h_and_inner_thumb_taps_remain_enter_space() {
+fn caps_word_is_on_nav_h_and_outer_thumb_taps_are_enter_space() {
     let t = sequence(&[
-        (0, 3, 4, true),
+        (0, 3, 3, true),
         (250, 1, 5, true),
         (280, 1, 5, false),
-        (320, 3, 4, false),
+        (320, 3, 3, false),
         (400, 0, 0, true),
         (430, 0, 0, false),
     ]);
     assert_eq!(t.keys, [(K::Q, 2)], "{t:?}");
     released(&t);
     let t = sequence(&[
-        (0, 3, 4, true),
-        (20, 3, 5, true),
-        (70, 3, 4, false),
-        (90, 3, 5, false),
+        (0, 3, 3, true),
+        (20, 3, 6, true),
+        (70, 3, 3, false),
+        (90, 3, 6, false),
     ]);
     assert_eq!(t.keys, [(K::Enter, 0), (K::Space, 0)], "{t:?}");
     released(&t);

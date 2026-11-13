@@ -23,11 +23,12 @@ Urchin has **two thumbs per hand**, so a same-hand two-thumb chord takes the
 place of Miryoku's **tertiary** (third) thumb. This is unrelated to Miryoku's
 alternate alpha layer named Extra, which is not enabled here. There is no Tri layer.
 
-Existing physical thumb tap positions are preserved, from left to right:
+Thumbs match REMAKE's order with its two tertiary switches omitted, from left
+to right (outer left, inner left, inner right, outer right):
 
-| Left Tab thumb | Left Enter thumb | Right Space thumb | Right Backspace thumb |
+| Left Enter thumb | Left Tab thumb | Right Backspace thumb | Right Space thumb |
 |---|---|---|---|
-| Tab / hold Mouse | Enter / hold Nav | Space / hold Num | Backspace / hold Sym |
+| Enter / hold Nav | Tab / hold Mouse | Backspace / hold Sym | Space / hold Num |
 | `(3,3)` | `(3,4)` | `(3,5)` | `(3,6)` |
 
 | Layer | Hold | Opposite-hand functions |
@@ -65,10 +66,10 @@ timeout starts when the second thumb completes the chord.
 | Fun | Menu / Application | Disabled |
 
 Thus every action of REMAKE's missing tertiary thumbs remains available, not
-just base Escape and Delete. Left Tab/Enter also become Minus/0 on Num,
-underscore/close parenthesis on Sym, and Tab/Enter on Fun. Right Space/Backspace
-become Space/Backspace on Nav, left/right mouse buttons on Mouse, and
-play-pause/stop on Media. Direct thumb keys and chord outputs on these layers
+just base Escape and Delete. Left Enter/Tab also become 0/Minus on Num,
+close parenthesis/underscore on Sym, and Enter/Tab on Fun. Right Backspace/Space
+become Backspace/Space on Nav, right/left mouse buttons on Mouse, and
+stop/play-pause on Media. Direct thumb keys and chord outputs on these layers
 can be held for repeat or drag where the host supports it.
 
 Caps Word moves from the old inner-thumb combo to **Nav + H**: hold Enter,
@@ -140,8 +141,8 @@ embedded in the firmware by `build.rs`, so changes to the visual layout require
 rebuilding and flashing. Use **File → Load dummy JSON** to preview `vial.json`
 without flashing; dummy mode does not edit the connected keyboard.
 
-When Vial prompts for unlock, hold **both inner thumbs (Enter + Space)**,
-matrix positions `(3,4)` and `(3,5)`. The physical-presence lock stays enabled.
+When Vial prompts for unlock, hold **both outer thumbs (Enter + Space)**,
+matrix positions `(3,3)` and `(3,6)`. The physical-presence lock stays enabled.
 Named `THUMB` profiles are an RMK extension: replacing a thumb binding using
 Vial's standard layer-tap encoding can lose its profile. Combos match actions,
 so remapping their member keys also requires updating the corresponding combos.

@@ -19,6 +19,7 @@ map = """
 [keymap]
 layers = 7
 # REMAKE's QWERTY Miryoku layers, adapted to two physical thumbs per hand.
+# Keep REMAKE's middle/inner left and inner/middle right thumb order on all layers.
 # Each same-hand thumb chord replaces its missing tertiary thumb on every layer.
 
 [[keymap.layer]]
@@ -27,7 +28,7 @@ keys = """
 Q             W            E            R             T       Y       U                 I            O            P
 MT(A, LShift) MT(S, LAlt)  MT(D, LGui)  MT(F, LCtrl)  G       H       MT(J, RCtrl)      MT(K, RGui)  MT(L, RAlt)  MT(Semicolon, RShift)
 Z             X            C            V             B       N       M                 Comma        Dot          Slash
-                           LT(2, Tab, THUMB) LT(1, Enter, THUMB) LT(4, Space, THUMB) LT(5, Backspace, THUMB)
+                           LT(1, Enter, THUMB) LT(2, Tab, THUMB) LT(5, Backspace, THUMB) LT(4, Space, THUMB)
 """
 
 [[keymap.layer]]
@@ -36,7 +37,7 @@ keys = """
 TD(0)  No   No   No    No  WM(Y, LCtrl)    WM(Insert, LShift) WM(Insert, LCtrl) WM(Delete, LShift) Undo
 LShift LAlt LGui LCtrl No  CapsWordToggle Left               Down              Up                 Right
 No     No   No   No    No  Insert         Home               PageDown          PageUp             End
-                 No No Space Backspace
+                 No No Backspace Space
 """
 
 [[keymap.layer]]
@@ -45,7 +46,7 @@ keys = """
 TD(0)  No   No   No    No  WM(Y, LCtrl) WM(Insert, LShift) WM(Insert, LCtrl) WM(Delete, LShift) Undo
 LShift LAlt LGui LCtrl No  No       MouseLeft          MouseDown         MouseUp            MouseRight
 No     No   No   No    No  No       MouseWheelLeft     MouseWheelDown    MouseWheelUp       MouseWheelRight
-                 No No MouseBtn1 MouseBtn2
+                 No No MouseBtn2 MouseBtn1
 """
 
 [[keymap.layer]]
@@ -54,7 +55,7 @@ keys = """
 TD(0)  No   No   No    No  No    No             No           No         No
 LShift LAlt LGui LCtrl No  No    MediaPrevTrack AudioVolDown AudioVolUp MediaNextTrack
 No     No   No   No    No  User7 User0          User1        User2      User3
-                 No No MediaPlayPause MediaStop
+                 No No MediaStop MediaPlayPause
 """
 
 [[keymap.layer]]
@@ -63,7 +64,7 @@ keys = """
 LeftBracket 7 8 9 RightBracket No No    No   No   TD(0)
 Quote       4 5 6 Equal        No RCtrl RGui RAlt RShift
 Grave       1 2 3 Backslash    No No    No   No   No
-              Minus 0 No No
+              0 Minus No No
 """
 
 [[keymap.layer]]
@@ -72,7 +73,7 @@ keys = """
 WM(LeftBracket, LShift) WM(7, LShift) WM(8, LShift) WM(9, LShift) WM(RightBracket, LShift) No No    No   No   TD(0)
 WM(Quote, LShift)       WM(4, LShift) WM(5, LShift) WM(6, LShift) WM(Equal, LShift)        No RCtrl RGui RAlt RShift
 WM(Grave, LShift)       WM(1, LShift) WM(2, LShift) WM(3, LShift) WM(Backslash, LShift)    No No    No   No   No
-                                    WM(Minus, LShift) WM(0, LShift) No No
+                                    WM(0, LShift) WM(Minus, LShift) No No
 """
 
 [[keymap.layer]]
@@ -81,7 +82,7 @@ keys = """
 F12 F7 F8 F9 PrintScreen No No    No   No   TD(0)
 F11 F4 F5 F6 ScrollLock  No RCtrl RGui RAlt RShift
 F10 F1 F2 F3 Pause       No No    No   No   No
-        Tab Enter No No
+        Enter Tab No No
 """
 
 [rmk]
@@ -96,8 +97,8 @@ split_central_sleep_timeout_seconds = 30
 enabled = true
 
 [host]
-# Both inner thumbs (Enter + Space), on real switches rather than empty slots.
-unlock_keys = [[3, 4], [3, 5]]
+# Enter + Space (both outer thumbs), on real switches rather than empty slots.
+unlock_keys = [[3, 3], [3, 6]]
 
 [event.battery_status]
 channel_size = 2
@@ -158,15 +159,15 @@ profile = "BOOT"
 timeout = "50ms"
 combos = [
     # Base: tertiary tap AND hold, with no individual thumb actions leaking.
-    { actions = ["LT(2, Tab, THUMB)", "LT(1, Enter, THUMB)"], output = "LT(3, Escape, CHORD)", layer = 0 },
-    { actions = ["LT(4, Space, THUMB)", "LT(5, Backspace, THUMB)"], output = "LT(6, Delete, CHORD)", layer = 0 },
+    { actions = ["LT(1, Enter, THUMB)", "LT(2, Tab, THUMB)"], output = "LT(3, Escape, CHORD)", layer = 0 },
+    { actions = ["LT(5, Backspace, THUMB)", "LT(4, Space, THUMB)"], output = "LT(6, Delete, CHORD)", layer = 0 },
     # Opposite-hand sublayers retain each missing tertiary thumb's function.
-    { actions = ["Space", "Backspace"], output = "Delete", layer = 1 },
-    { actions = ["MouseBtn1", "MouseBtn2"], output = "MouseBtn3", layer = 2 },
-    { actions = ["MediaPlayPause", "MediaStop"], output = "AudioMute", layer = 3 },
-    { actions = ["Minus", "0"], output = "Dot", layer = 4 },
-    { actions = ["WM(Minus, LShift)", "WM(0, LShift)"], output = "WM(9, LShift)", layer = 5 },
-    { actions = ["Tab", "Enter"], output = "Application", layer = 6 },
+    { actions = ["Backspace", "Space"], output = "Delete", layer = 1 },
+    { actions = ["MouseBtn2", "MouseBtn1"], output = "MouseBtn3", layer = 2 },
+    { actions = ["MediaStop", "MediaPlayPause"], output = "AudioMute", layer = 3 },
+    { actions = ["0", "Minus"], output = "Dot", layer = 4 },
+    { actions = ["WM(0, LShift)", "WM(Minus, LShift)"], output = "WM(9, LShift)", layer = 5 },
+    { actions = ["Enter", "Tab"], output = "Application", layer = 6 },
 ]
 
 [split]

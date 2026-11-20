@@ -7,6 +7,10 @@ readme = "README.md"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
+[features]
+default = []
+prototype-spim = []
+
 [dependencies]
 # Pin the published main-plus-ordered-tap-hold baseline for reproducible measurements.
 rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "e9e726304cb34aa36583f900be1c54da41fe0fde", default-features = false, features = [

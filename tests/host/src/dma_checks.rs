@@ -1,6 +1,6 @@
 //! Active DMA model: retains only the caller's pointer, never an owned copy.
 use crate::{
-    display_spi::{CancelSafe, DmaControl},
+    display_spi::{CancelSafe, DmaControl, SpiFactory, Transient},
     nice_view::NiceView,
 };
 use embedded_hal::{digital, spi};
@@ -24,9 +24,20 @@ struct Dma {
     seen: Vec<u8>,
     log: Vec<&'static str>,
     complete: bool,
+    live_buses: usize,
+    dropped_buses: usize,
 }
 type State = Rc<RefCell<Dma>>;
 struct Bus(State);
+impl Drop for Bus {
+    fn drop(&mut self) {
+        let mut s = self.0.borrow_mut();
+        assert!(!s.active, "peripheral dropped before DMA quiesced");
+        s.live_buses -= 1;
+        s.dropped_buses += 1;
+        s.log.push("bus-drop");
+    }
+}
 impl spi::ErrorType for Bus {
     type Error = Infallible;
 }
@@ -136,9 +147,127 @@ impl DmaControl for Control {
     }
 }
 fn bus(state: &State) -> CancelSafe<Bus, Control> {
+    state.borrow_mut().live_buses += 1;
     // SAFETY: both objects control the same modeled DMA, Ready quiesces it,
     // and no external operation starts DMA.
     unsafe { CancelSafe::new(Bus(state.clone()), Control(state.clone())) }
+}
+
+struct Factory(State);
+impl SpiFactory for Factory {
+    type Error = Infallible;
+    type Bus<'a>
+        = CancelSafe<Bus, Control>
+    where
+        Self: 'a;
+
+    fn open(&mut self) -> Self::Bus<'_> {
+        self.0.borrow_mut().log.push("open");
+        bus(&self.0)
+    }
+}
+
+#[test]
+fn transient_spi_opens_only_for_io_and_drops_after_each_completed_write() {
+    let state = State::default();
+    state.borrow_mut().complete = true;
+    let mut spi = Transient::new(Factory(state.clone()));
+    futures::executor::block_on(async {
+        spi.flush().await.unwrap();
+        assert_eq!(state.borrow().live_buses, 0);
+        for bytes in [&[0, 0][..], &[2, 0][..]] {
+            spi.write(bytes).await.unwrap();
+            assert_eq!(
+                state.borrow().live_buses,
+                0,
+                "peripheral retained between panel ticks"
+            );
+        }
+        spi.flush().await.unwrap();
+    });
+    let s = state.borrow();
+    assert_eq!(s.log.iter().filter(|entry| **entry == "open").count(), 2);
+    assert_eq!(s.dropped_buses, 2);
+}
+
+#[test]
+fn transient_spi_cancellation_stops_dma_before_dropping_the_peripheral_and_cs() {
+    let state = State::default();
+    let mut panel = NiceView::new(
+        Transient::new(Factory(state.clone())),
+        Cs(state.clone()),
+        Power,
+        Delay,
+    );
+    let mut operation = Box::pin(panel.maintain(false));
+    let mut cx = Context::from_waker(futures::task::noop_waker_ref());
+    assert!(operation.as_mut().poll(&mut cx).is_pending());
+    assert_eq!(state.borrow().live_buses, 1);
+    drop(operation);
+    {
+        let s = state.borrow();
+        let stopped = s.log.iter().position(|entry| *entry == "stopped").unwrap();
+        let future_drop = s
+            .log
+            .iter()
+            .position(|entry| *entry == "future-drop")
+            .unwrap();
+        let bus_drop = s.log.iter().position(|entry| *entry == "bus-drop").unwrap();
+        let cs_low = s.log.iter().rposition(|entry| *entry == "cs-low").unwrap();
+        assert!(stopped < future_drop && future_drop < bus_drop && bus_drop < cs_low);
+        assert_eq!(s.live_buses, 0);
+    }
+    state.borrow_mut().complete = true;
+    futures::executor::block_on(panel.flush(true)).unwrap();
+    assert_eq!(state.borrow().live_buses, 0);
+    assert_eq!(state.borrow().dropped_buses, 2);
+}
+
+struct FallibleFactory(State);
+struct FallibleBus(CancelSafe<Bus, Control>);
+impl spi::ErrorType for FallibleBus {
+    type Error = spi::ErrorKind;
+}
+impl SpiBus for FallibleBus {
+    async fn write(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.0.write(bytes).await.unwrap();
+        Err(spi::ErrorKind::Other)
+    }
+    async fn read(&mut self, _: &mut [u8]) -> Result<(), Self::Error> {
+        unreachable!()
+    }
+    async fn transfer(&mut self, _: &mut [u8], _: &[u8]) -> Result<(), Self::Error> {
+        unreachable!()
+    }
+    async fn transfer_in_place(&mut self, _: &mut [u8]) -> Result<(), Self::Error> {
+        unreachable!()
+    }
+    async fn flush(&mut self) -> Result<(), Self::Error> {
+        unreachable!("failed operation must not flush")
+    }
+}
+impl SpiFactory for FallibleFactory {
+    type Error = spi::ErrorKind;
+    type Bus<'a>
+        = FallibleBus
+    where
+        Self: 'a;
+    fn open(&mut self) -> Self::Bus<'_> {
+        FallibleBus(bus(&self.0))
+    }
+}
+
+#[test]
+fn transient_spi_drops_the_peripheral_when_an_operation_returns_an_error() {
+    let state = State::default();
+    state.borrow_mut().complete = true;
+    let mut spi = Transient::new(FallibleFactory(state.clone()));
+    assert_eq!(
+        futures::executor::block_on(spi.write(&[0, 0])),
+        Err(spi::ErrorKind::Other)
+    );
+    assert_eq!(state.borrow().live_buses, 0);
+    assert_eq!(state.borrow().dropped_buses, 1);
 }
 struct Cs(State);
 impl digital::ErrorType for Cs {

@@ -18,8 +18,63 @@ pub(crate) trait DmaControl {
 }
 
 pub(crate) struct CancelSafe<SPI, CONTROL> {
+    // Drop the HAL driver before the control parks the released pins.
     spi: SPI,
     control: CONTROL,
+}
+
+/// Each opened bus must quiesce DMA on completion and cancellation before drop.
+#[cfg(any(feature = "prototype-spim", test))]
+pub(crate) trait SpiFactory {
+    type Error: embedded_hal::spi::Error;
+    type Bus<'a>: SpiBus<u8, Error = Self::Error>
+    where
+        Self: 'a;
+    fn open(&mut self) -> Self::Bus<'_>;
+}
+
+/// Keep only construction resources between operations, not an enabled driver.
+#[cfg(any(feature = "prototype-spim", test))]
+pub(crate) struct Transient<F>(F);
+
+#[cfg(any(feature = "prototype-spim", test))]
+impl<F> Transient<F> {
+    pub(crate) fn new(factory: F) -> Self {
+        Self(factory)
+    }
+}
+
+#[cfg(any(feature = "prototype-spim", test))]
+impl<F: SpiFactory> embedded_hal::spi::ErrorType for Transient<F> {
+    type Error = F::Error;
+}
+
+#[cfg(any(feature = "prototype-spim", test))]
+impl<F: SpiFactory> SpiBus<u8> for Transient<F> {
+    async fn read(&mut self, bytes: &mut [u8]) -> Result<(), Self::Error> {
+        let mut bus = self.0.open();
+        bus.read(bytes).await?;
+        bus.flush().await
+    }
+    async fn write(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+        let mut bus = self.0.open();
+        bus.write(bytes).await?;
+        bus.flush().await
+    }
+    async fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
+        let mut bus = self.0.open();
+        bus.transfer(read, write).await?;
+        bus.flush().await
+    }
+    async fn transfer_in_place(&mut self, bytes: &mut [u8]) -> Result<(), Self::Error> {
+        let mut bus = self.0.open();
+        bus.transfer_in_place(bytes).await?;
+        bus.flush().await
+    }
+    async fn flush(&mut self) -> Result<(), Self::Error> {
+        // Every operation flushes before releasing its driver.
+        Ok(())
+    }
 }
 
 impl<SPI, CONTROL> CancelSafe<SPI, CONTROL> {
@@ -106,6 +161,68 @@ mod nrf {
 
     struct Spi2Control;
 
+    #[cfg(feature = "prototype-spim")]
+    impl Spi2Control {
+        fn park_pins() {
+            use embassy_nrf::pac::gpio::vals::{Dir, Input};
+            let port = embassy_nrf::pac::P0;
+            port.outclr().write(|w| {
+                w.set_pin(17, true);
+                w.set_pin(20, true);
+            });
+            for pin in [17, 20] {
+                port.pin_cnf(pin).write(|w| {
+                    w.set_dir(Dir::Output);
+                    w.set_input(Input::Disconnect);
+                });
+            }
+        }
+    }
+
+    #[cfg(feature = "prototype-spim")]
+    impl Drop for Spi2Control {
+        fn drop(&mut self) {
+            // CancelSafe drops SPIM first: no peripheral still drives these pins.
+            Self::park_pins();
+        }
+    }
+
+    #[cfg(feature = "prototype-spim")]
+    struct Factory<'d> {
+        spi: Peri<'d, peripherals::SPI2>,
+        sck: Peri<'d, peripherals::P0_20>,
+        mosi: Peri<'d, peripherals::P0_17>,
+        irq: crate::DisplayIrqs,
+        config: spim::Config,
+    }
+
+    #[cfg(feature = "prototype-spim")]
+    impl SpiFactory for Factory<'_> {
+        type Error = spim::Error;
+        type Bus<'a>
+            = CancelSafe<spim::Spim<'a, embassy_nrf::mode::Async>, Spi2Control>
+        where
+            Self: 'a;
+
+        fn open(&mut self) -> Self::Bus<'_> {
+            let spi = spim::Spim::new_txonly(
+                self.spi.reborrow(),
+                self.sck.reborrow(),
+                self.mosi.reborrow(),
+                self.irq,
+                self.config.clone(),
+            );
+            // SAFETY: reborrowing retains exclusive SPI2/pin ownership in this
+            // factory; the control quiesces exactly this driver's DMA.
+            unsafe { CancelSafe::new(spi, Spi2Control) }
+        }
+    }
+
+    #[cfg(feature = "prototype-spim")]
+    type Driver<'d> = Transient<Factory<'d>>;
+    #[cfg(not(feature = "prototype-spim"))]
+    type Driver<'d> = CancelSafe<spim::Spim<'d, embassy_nrf::mode::Async>, Spi2Control>;
+
     impl DmaControl for Spi2Control {
         fn disable_end_interrupt(&mut self) {
             embassy_nrf::pac::SPIM2
@@ -142,7 +259,8 @@ mod nrf {
         }
     }
 
-    /// Owns SPI2 through the HAL for its entire lifetime. Avoids the nRF52840
+    /// Exclusively owns SPI2, retaining the HAL driver only per operation when
+    /// `prototype-spim` is enabled. Avoids the nRF52840
     /// SPIM3-specific anomaly 198 without reserving a RAM bank. No raw peripheral or
     /// inner HAL handle escapes. Normal transfers remain interrupt-driven;
     /// only cancellation synchronously waits for STOPPED (at most the current
@@ -150,24 +268,35 @@ mod nrf {
     ///
     /// Nordic nRF52840 PS v1.1 §§6.25.1/6.25.4: STOP completes the current byte,
     /// STOPPED means stopped, END means both DMA buffers are no longer accessed.
-    pub struct DisplaySpi<'d>(CancelSafe<spim::Spim<'d, embassy_nrf::mode::Async>, Spi2Control>);
+    pub struct DisplaySpi<'d>(Driver<'d>);
 
     impl<'d> DisplaySpi<'d> {
         pub fn new(
             spi: Peri<'d, peripherals::SPI2>,
-            irq: impl interrupt::typelevel::Binding<
-                interrupt::typelevel::SPI2,
-                spim::InterruptHandler<peripherals::SPI2>,
-            > + 'd,
+            irq: crate::DisplayIrqs,
             sck: Peri<'d, peripherals::P0_20>,
             mosi: Peri<'d, peripherals::P0_17>,
             config: spim::Config,
         ) -> Self {
-            let spi = spim::Spim::new_txonly(spi, sck, mosi, irq, config);
-            // SAFETY: construction consumes the unique SPI2 token, the abort
-            // register block is exactly SPIM2, and HAL's END-only ISR does not
-            // start transfers. The private wrapper prevents bypassing guards.
-            Self(unsafe { CancelSafe::new(spi, Spi2Control) })
+            #[cfg(feature = "prototype-spim")]
+            {
+                Spi2Control::park_pins();
+                Self(Transient::new(Factory {
+                    spi,
+                    sck,
+                    mosi,
+                    irq,
+                    config,
+                }))
+            }
+            #[cfg(not(feature = "prototype-spim"))]
+            {
+                let spi = spim::Spim::new_txonly(spi, sck, mosi, irq, config);
+                // SAFETY: construction consumes the unique SPI2 token, the abort
+                // register block is exactly SPIM2, and HAL's END-only ISR does not
+                // start transfers. The private wrapper prevents bypassing guards.
+                Self(unsafe { CancelSafe::new(spi, Spi2Control) })
+            }
         }
     }
 

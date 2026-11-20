@@ -154,6 +154,37 @@ so remapping their member keys also requires updating the corresponding combos.
 
 ## Displays and power
 
+### Active-power prototype builds
+
+The `prototype` branch has two independent, default-off experiments:
+
+- `prototype-matrix`: cycle-counted matrix settling and 1 ms active scan gaps.
+- `prototype-spim`: construct/drop the display SPIM driver around each I/O operation.
+
+Build the comparisons from the same commit and Git-pinned RMK source:
+
+```sh
+cargo build --release --bins --locked
+cargo build --release --bins --locked --features prototype-matrix
+cargo build --release --bins --locked --features prototype-spim
+cargo build --release --bins --locked --features prototype-matrix,prototype-spim
+```
+
+Each command replaces the release binaries; save or convert them before building
+the next variant. For an explicitly selected flashable variant, use Cargo
+directly rather than `cargo make uf2`, whose existing tasks do not pass these flags:
+
+```sh
+cargo objcopy --release --locked --bin central --features prototype-matrix,prototype-spim -- -O ihex prototype-both-central.hex
+cargo hex-to-uf2 --input-path prototype-both-central.hex --output-path prototype-both-central.uf2 --family nrf52840
+```
+
+Replace `central` with `peripheral` for the other half. Select only the desired
+feature for an isolated experiment, or omit `--features` for baseline, and name
+the output accordingly. For initial **central-only** comparisons, keep the
+peripheral on the baseline firmware. These are unmeasured experiments, not power
+savings claims. See [the notebook](PROTOTYPE.md) for workload and validation details.
+
 Each screen uses a compact dark layout with a battery icon and numeric
 percentage, or `?` and `--%` when unknown. The bolt indicates local USB power,
 not charging. The central shows the prominent uppercase layer and a compact

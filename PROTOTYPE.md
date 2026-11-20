@@ -11,6 +11,7 @@ It is not a claim that any experiment reduces measured current.
 - Published PR tip selected for rebasing: `534e7875d6f2ee0b2c93608f9660eeb5f5bbc186`.
 - Upstream main used for the rebase: `e4e68e231c35d31ae43092ed894280b311828a89`.
 - Rebased PR / initial RMK prototype: `e9e726304cb34aa36583f900be1c54da41fe0fde`.
+- Owner-amended Urchin migration baseline: `e1f34c35007b6824f2589d1d3cb82fe38c18a7ac`.
 
 The five PR commits were rebased, not squashed. The one manual conflict was in
 combo dispatch: retain the PR's ordered-input implementation while using
@@ -26,7 +27,7 @@ awake-idle current were not recorded here. Do not compare it quantitatively
 with new measurements until those conditions are established.
 
 Firmware and host tests pin the published RMK Git revision
-`e9e726304cb34aa36583f900be1c54da41fe0fde` in both Cargo manifests. No sibling
+`0d9c302094dfc2aacc62263d09b19f7013e18611` in both Cargo manifests. No sibling
 checkout is required. Record the Urchin commit, dirty status, and exact RMK pin
 with each measurement. Publish each future RMK experiment commit before updating
 the pin; do not use a moving branch reference for measurement checkpoints.
@@ -35,13 +36,68 @@ The first migration commit (`d1c18bc`) used sibling path dependencies. This was
 corrected to a Git pin at the owner's request so a checkout on the measurement
 machine resolves the same published source without local workspace assumptions.
 
+## Active experiments
+
+Two independent Cargo features select the experiments; both are off by default.
+
+| Variant | Cargo features | Matrix policy | Display SPIM lifetime |
+|---|---|---|---|
+| Baseline | none | Existing async line wait and unpaced active rescans | Retained |
+| Matrix | `prototype-matrix` | Cycle-counted short settling; 1 ms gap between active scans | Retained |
+| SPIM | `prototype-spim` | Baseline | Construct/drop around each I/O operation |
+| Both | `prototype-matrix,prototype-spim` | Experimental | Experimental |
+
+The matrix flag forwards RMK's `prototype_matrix_scan` feature. Its settling
+wait is `cortex_m::asm::delay(64)` on the fixed 64 MHz nRF52840: nominally 1 µs
+without scheduling a sub-tick RTC timer. This is not a measured/calibrated
+electrical delay. The 1 ms gap after a complete active scan is what bounds
+polling frequency. GPIO-only idle wake and the 5 ms debounce configuration remain.
+
+The SPIM flag retains only peripheral/pin ownership tokens and configuration
+between operations. Each operation constructs the HAL driver, uses the existing
+DMA cancellation guard, flushes, and drops the driver. HAL drop disables SPIM;
+then SCK/MOSI are parked low. Cancellation must stop DMA before its buffers and
+the driver are dropped. No display driver remains enabled between panel ticks
+or while the screen sleeps. Reinitialization overhead may offset savings;
+measure rather than assuming this experiment is better.
+
+Neither flag changes BLE intervals, display setup/hold waits, image policy,
+16 ms COM cadence, or regulator/clock settings. These are board prototypes,
+not production defaults or demonstrated current reductions.
+
+### Build and flash comparisons
+
+From the Urchin repository, build each variant with its exact feature set:
+
+```sh
+cargo build --release --bins --locked
+cargo build --release --bins --locked --features prototype-matrix
+cargo build --release --bins --locked --features prototype-spim
+cargo build --release --bins --locked --features prototype-matrix,prototype-spim
+```
+
+All four builds use the same pinned RMK revision; the baseline does not need a
+branch checkout or a dependency edit. See README's explicit `cargo objcopy` and
+`cargo hex-to-uf2` commands for passing the experiment flags through conversion.
+The pre-existing cargo-make UF2 tasks do not forward these flags.
+
+For initial central-current attribution, keep the peripheral on baseline while
+changing only the central image. Then optionally repeat with matching variants
+on both halves and record that distinction. Changing Cargo features can reset
+RMK settings/bonds: back up mappings, re-pair if required, and wait for connection
+parameter negotiation before measuring. Do not compare initial advertising or
+pairing transients with an established connection.
+
+Keep distinct files and checksums for every role/variant. Do not flash whichever
+binary happens to remain in the shared release directory after the last build.
+
 ## Experiment sequence
 
 - [x] Rebase the published PR onto main and create both prototype branches.
 - [x] Build both migrated firmware targets and run the board's host checks.
-- [ ] Resolve the broader RMK feature-matrix validation gap; do not change power policy yet.
-- [ ] Prototype paced active matrix scans with short settling delays.
-- [ ] Prototype SPIM disabling between completed display transactions.
+- [ ] Resolve the broader RMK feature-matrix validation gap separately.
+- [x] Prototype paced active matrix scans with short settling delays.
+- [x] Prototype SPIM construction/drop between display operations.
 - [ ] Prototype short display setup/hold delays without RTC-backed async waits.
 - [ ] Evaluate BLE connection intervals separately, with explicit latency tradeoffs.
 - [ ] Capture hardware current traces and typing/wake acceptance for each checkpoint.
@@ -110,7 +166,55 @@ the LCD powered indefinitely without the required inversion maintenance.
 
 Hardware measurements: **pending the measurement board**.
 
-Software migration validation on Windows/MSVC, Rust 1.100.0:
+### Active-experiment validation
+
+- RMK matrix feature: **582 tests passed**. Feature-disabled baseline: **579 passed**.
+- The paced-scan regression failed before implementation (79 reads over 8 ms),
+  then passed with bounded release polling. A separately reproduced immediate
+  GPIO-error spin was corrected with a cooperative yield after idle waits.
+- Each of the four Urchin feature combinations: **72 host tests passed,
+  1 intentionally ignored** (preview exporter).
+- All four combinations built **both central and peripheral release firmware**
+  from the published RMK pin. Subsequent experiment builds used `--locked`.
+- Source review approved the matrix timing/state handling and SPIM
+  ownership/drop/cancellation paths. The shared six-word timer-queue dependency
+  remains unified. Host models do not validate actual pins, IRQ timing or power.
+- The broader Windows BLE/passkey crypto-linker gap below remains unresolved;
+  no retries or weakened checks were introduced to bypass it.
+
+Local ELF, HEX and UF2 files were generated for both roles in:
+
+```text
+target/power-prototypes/baseline/
+target/power-prototypes/matrix/
+target/power-prototypes/spim/
+target/power-prototypes/both/
+```
+
+Each directory contains `central.uf2` and `peripheral.uf2` plus their ELF/HEX
+inputs. These generated files are ignored by Git, not uploaded with the branch.
+`target/power-prototypes/checksums.csv` records the feature selection and full
+SHA-256 for all eight UF2 files. No device has been flashed by this session.
+The previously recorded migration ELF hashes below identify older builds, not
+these experiment images.
+
+UF2 fingerprints from this local Rust 1.100.0 build (not a cross-machine
+reproducible-build guarantee):
+
+| Variant | Role | SHA-256 |
+|---|---|---|
+| baseline | central | `a00eb6555998c5a65c2e858b226c031d14450d4740b801d9b381b5278b588421` |
+| baseline | peripheral | `b912f571c47d3a183298de2062c977f853b95ae0af955fe1f46967f59d0edc1e` |
+| matrix | central | `517f7a93edba5f452328a8f949bdb23e0772e49e58b6ae2557c99006958b6d85` |
+| matrix | peripheral | `b4d1e8f919b95f4cd38552e6cc1d2e811ba0a65bb567d058b679663378b1d318` |
+| spim | central | `ede790c7f13008eb3e2be73fa7879ea1fae5aa627aacadd73bb2d0314018a97d` |
+| spim | peripheral | `84d5345116835e20f384c9da5f11e4f950b0e56882fb57f2a480e40663388efc` |
+| both | central | `819b801a343a1c128a119532303e028de1917264c1106f250407345d0adfeabc` |
+| both | peripheral | `554c6e3afed71bab8e38bcdcb904a2d7080fc8bbdd1c2737d200eba68751b1f7` |
+
+### Historical migration validation
+
+Software migration validation on Windows/MSVC, Rust 1.100.0, before the experiments:
 
 - RMK `cargo nextest run --manifest-path rmk/Cargo.toml --config-file .config/nextest.toml --no-default-features`:
   **579 passed** (unit and integration tests).
@@ -128,9 +232,10 @@ Software migration validation on Windows/MSVC, Rust 1.100.0:
   failure. These tests did not execute. No test expectations, feature coverage,
   or cryptographic implementations were weakened to bypass the failures.
 
-Stop further power-policy changes until this validation gap is resolved. Debug
-and release builds have already failed with the same missing-symbol class;
-do not repeat optimization-flag guesses. The current hypothesis is a Windows
+The owner requested proceeding with the board experiments while preserving
+this known validation gap. Debug and release builds have already failed with
+the same missing-symbol class; do not repeat optimization-flag guesses or
+weaken the affected tests. The current hypothesis is a Windows
 linking interaction with Embassy's link-time crypto drivers, but attribution
 to upstream requires an isolated reproduction on unmodified main. A supported
 Linux environment or a confirmed native-linker fix is still needed for those checks.

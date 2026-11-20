@@ -1,0 +1,2 @@
+prototype text eol=lf
+tests/prototype.sh text eol=lf

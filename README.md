@@ -161,27 +161,27 @@ The `prototype` branch has two independent, default-off experiments:
 - `prototype-matrix`: cycle-counted matrix settling and 1 ms active scan gaps.
 - `prototype-spim`: construct/drop the display SPIM driver around each I/O operation.
 
-Build the comparisons from the same commit and Git-pinned RMK source:
+Build flashable comparisons from the same commit and Git-pinned RMK source:
 
 ```sh
-cargo build --release --bins --locked
-cargo build --release --bins --locked --features prototype-matrix
-cargo build --release --bins --locked --features prototype-spim
-cargo build --release --bins --locked --features prototype-matrix,prototype-spim
+./prototype baseline
+./prototype matrix
+./prototype spim
+./prototype both
 ```
 
-Each command replaces the release binaries; save or convert them before building
-the next variant. For an explicitly selected flashable variant, use Cargo
-directly rather than `cargo make uf2`, whose existing tasks do not pass these flags:
+Each command builds both halves and writes `central.uf2`, `peripheral.uf2`, their
+ELF/HEX inputs, `SHA256SUMS`, and `BUILD.txt` under
+`target/power-prototypes/<variant>/`. It does not flash anything. A failed build
+or conversion leaves the previous complete output set unchanged.
 
-```sh
-cargo objcopy --release --locked --bin central --features prototype-matrix,prototype-spim -- -O ihex prototype-both-central.hex
-cargo hex-to-uf2 --input-path prototype-both-central.hex --output-path prototype-both-central.uf2 --family nrf52840
-```
+The script requires the existing UF2 build tools: Rust with the nRF52840 target,
+`flip-link`, `cargo-binutils` (`rust-objcopy`) with Rust's LLVM tools component,
+and `cargo-hex-to-uf2`. Run it in Bash, including Git Bash on Windows; it does
+not require WSL. Verify a set with `sha256sum -c SHA256SUMS` from its directory
+(or `shasum -a 256 -c SHA256SUMS` on macOS).
 
-Replace `central` with `peripheral` for the other half. Select only the desired
-feature for an isolated experiment, or omit `--features` for baseline, and name
-the output accordingly. For initial **central-only** comparisons, keep the
+For initial **central-only** comparisons, keep the
 peripheral on the baseline firmware. These are unmeasured experiments, not power
 savings claims. See [the notebook](PROTOTYPE.md) for workload and validation details.
 

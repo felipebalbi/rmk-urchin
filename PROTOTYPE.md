@@ -67,19 +67,27 @@ not production defaults or demonstrated current reductions.
 
 ### Build and flash comparisons
 
-From the Urchin repository, build each variant with its exact feature set:
+From the Urchin repository, build and convert each named variant:
 
 ```sh
-cargo build --release --bins --locked
-cargo build --release --bins --locked --features prototype-matrix
-cargo build --release --bins --locked --features prototype-spim
-cargo build --release --bins --locked --features prototype-matrix,prototype-spim
+./prototype baseline
+./prototype matrix
+./prototype spim
+./prototype both
 ```
 
 All four builds use the same pinned RMK revision; the baseline does not need a
-branch checkout or a dependency edit. See README's explicit `cargo objcopy` and
-`cargo hex-to-uf2` commands for passing the experiment flags through conversion.
-The pre-existing cargo-make UF2 tasks do not forward these flags.
+branch checkout or a dependency edit. The script explicitly disables defaults,
+selects only the variant's experiment flags, builds both roles with `--locked`,
+and converts the resulting ELF files through HEX to UF2. It fixes the target and
+target directory so unrelated Cargo environment settings cannot select stale
+release files. It never flashes a board.
+
+Each `target/power-prototypes/<variant>/` directory contains both roles' ELF,
+HEX and UF2 files, a `SHA256SUMS` file, and `BUILD.txt` recording the variant,
+features, target, Git commit and tracked working-tree status. Both conversions
+must succeed before the new output set is published. Contract checks for the
+script can be run with `bash tests/prototype.sh` without compiling firmware.
 
 For initial central-current attribution, keep the peripheral on baseline while
 changing only the central image. Then optionally repeat with matching variants
@@ -181,6 +189,11 @@ Hardware measurements: **pending the measurement board**.
   remains unified. Host models do not validate actual pins, IRQ timing or power.
 - The broader Windows BLE/passkey crypto-linker gap below remains unresolved;
   no retries or weakened checks were introduced to bypass it.
+- The Bash wrapper was exercised for all four variants under Git Bash on
+  Windows, including real firmware builds and UF2 conversion. All 24 output
+  checksums passed. Its isolated command tests cover feature selection, both
+  roles, paths with spaces, invalid arguments, and retaining the last complete
+  output set when a build or the second conversion fails.
 
 Local ELF, HEX and UF2 files were generated for both roles in:
 
@@ -193,13 +206,15 @@ target/power-prototypes/both/
 
 Each directory contains `central.uf2` and `peripheral.uf2` plus their ELF/HEX
 inputs. These generated files are ignored by Git, not uploaded with the branch.
-`target/power-prototypes/checksums.csv` records the feature selection and full
-SHA-256 for all eight UF2 files. No device has been flashed by this session.
+Per-variant `SHA256SUMS` and `BUILD.txt` are the current build records. The earlier
+combined `target/power-prototypes/checksums.csv` is a historical snapshot, not
+updated by the single-variant script. No device has been flashed by this session.
 The previously recorded migration ELF hashes below identify older builds, not
 these experiment images.
 
-UF2 fingerprints from this local Rust 1.100.0 build (not a cross-machine
-reproducible-build guarantee):
+Initial manually generated UF2 fingerprints from the local Rust 1.100.0 build
+(historical snapshot before the wrapper, not a cross-machine reproducible-build
+guarantee; use each directory's current `SHA256SUMS` after running the script):
 
 | Variant | Role | SHA-256 |
 |---|---|---|

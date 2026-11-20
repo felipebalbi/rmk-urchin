@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $0 {baseline|matrix|spim|both}" >&2
+    exit 2
+fi
+variant=$1
+case "$variant" in
+    baseline) features= ;;
+    matrix) features=prototype-matrix ;;
+    spim) features=prototype-spim ;;
+    both) features=prototype-matrix,prototype-spim ;;
+    *) echo "Usage: $0 {baseline|matrix|spim|both}" >&2; exit 2 ;;
+esac
+
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+root=$PWD
+target=thumbv7em-none-eabihf
+output="$root/target/power-prototypes/$variant"
+if command -v sha256sum > /dev/null 2>&1; then
+    checksum=(sha256sum)
+else
+    checksum=(shasum -a 256)
+fi
+
+args=(build --release --locked --bins --no-default-features --target "$target" --target-dir "$root/target")
+if [[ -n $features ]]; then
+    args+=(--features "$features")
+fi
+printf 'Building %s (features: %s)\n' "$variant" "${features:-none}"
+cargo "${args[@]}"
+
+# Publish a new set only after both halves have converted successfully.
+mkdir -p "$root/target/power-prototypes"
+staging=$(mktemp -d "$root/target/power-prototypes/.${variant}.XXXXXX")
+trap 'rm -rf -- "$staging"' EXIT
+for role in central peripheral; do
+    cp "$root/target/$target/release/$role" "$staging/$role.elf"
+    rust-objcopy -O ihex "$staging/$role.elf" "$staging/$role.hex"
+    cargo hex-to-uf2 --input-path "$staging/$role.hex" --output-path "$staging/$role.uf2" --family nrf52840
+done
+(
+    cd -- "$staging"
+    "${checksum[@]}" central.elf central.hex central.uf2 peripheral.elf peripheral.hex peripheral.uf2 > SHA256SUMS
+)
+{
+    printf 'variant=%s\nfeatures=%s\ntarget=%s\n' "$variant" "${features:-none}" "$target"
+    printf 'commit=%s\n' "$(git rev-parse HEAD)"
+    printf 'working-tree-status:\n'
+    git status --short --untracked-files=no
+} > "$staging/BUILD.txt"
+mkdir -p "$output"
+mv -- "$staging/"* "$output/"
+printf '\nReady: %s\n  central.uf2\n  peripheral.uf2\n  SHA256SUMS\n  BUILD.txt\n' "$output"

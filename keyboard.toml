@@ -89,7 +89,7 @@ F10 F1 F2 F3 Pause       No No    No   No   No
 # Match ZMK's 5ms press/release debounce.
 debounce_time = 5
 # Miryoku's BT0..BT3. User7 is the USB/BLE toggle with this profile count.
-ble_profiles_num = 4
+num_ble_profiles = 4
 # enable sleep
 split_central_sleep_timeout_seconds = 30
 
@@ -130,10 +130,9 @@ subs = 1
 # Home-row mods: opposite-hand chords hold; same-hand rolls tap.
 permissive_hold = true
 unilateral_tap = true
-# Retain following presses/releases until the home-row or thumb owner decides.
-buffered_tap_hold = true
+# The rebased ordered-input engine retains following events by default.
 enable_flow_tap = false
-# Inactive while flow-tap is disabled; retained for the legacy-policy comparison.
+# Inactive while flow-tap is disabled; retained for flow-tap comparison tests.
 prior_idle_time = "120ms"
 hold_timeout = "200ms"
 # Keep tap-then-hold repeat disabled.

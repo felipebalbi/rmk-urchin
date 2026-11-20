@@ -539,7 +539,7 @@ fn media_user_actions_match_four_profile_firmware_and_transport_toggle() {
         env!("CARGO_MANIFEST_DIR"),
         "/../../keyboard.toml"
     ));
-    assert_eq!(config.build_constants(&[]).unwrap().ble_profiles_num, 4);
+    assert_eq!(config.build_constants(&[]).unwrap().num_ble_profiles, 4);
     let keymap = config.keymap().unwrap();
     for (col, id) in [(5, 7), (6, 0), (7, 1), (8, 2), (9, 3)] {
         assert_eq!(

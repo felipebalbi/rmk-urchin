@@ -83,7 +83,7 @@ or tertiary chord, then **double-tap the top-row pinkie on the same hand**
 
 Clipboard uses Shift+Insert paste, Ctrl+Insert copy, Shift+Delete cut, HID Undo,
 and **Ctrl+Y Redo**. Application support varies. This deliberately corrects
-REMAKE's Again macro: the pinned RMK engine interprets HID Again as repeat-last-key
+REMAKE's Again macro: the RMK engine interprets HID Again as repeat-last-key
 even inside macros, rather than emitting the raw Redo usage. Auto Shift, layer
 locks, alternate alpha layers, and unsupported RGB/external-power controls are
 not included.
@@ -100,8 +100,9 @@ both left thumbs for Media; the right bottom row, from inner to outer, is
 the transport toggle uses User7. User IDs depend on the configured profile count.
 The unused RGB and external-power positions stay unbound.
 
-A short tap switches profile. Holding a selector for five seconds invokes
-RMK's clear-that-slot-and-select gesture. This pin does not implement Miryoku's
+A profile selector switches on press. Holding it for five seconds starts
+re-pairing, preserving the old bond until replacement pairing succeeds. This
+prototype does not implement Miryoku's
 Shift+profile clear or Shift+output force-USB semantics; Shift does not alter
 these User actions. Next/previous profile and clear-current-bond remain available
 for remapping in Vial, but are not assigned extra default positions.
@@ -120,14 +121,18 @@ Put each controller into its UF2 bootloader, then copy
 `rmk-urchin-central.uf2` to the central half and
 `rmk-urchin-peripheral.uf2` to the peripheral. Flash matching builds to both.
 
-Firmware and host dependencies are pinned in their respective Cargo manifests.
-Changes to the RMK revision or Cargo features can clear stored settings and
-bonds, requiring host and split re-pairing. Stored/Vial keymaps can override
-compiled defaults; back up custom mappings before resetting them.
-This port keeps the firmware RMK revision and features unchanged, but changes
-the layer/profile counts. **Reset the stored keymap to load the new defaults**;
-these count changes alone do not invalidate the pinned RMK configuration hash.
-Do not assume the former BT4/BT5 bonds will be preserved or remain accessible.
+On the `prototype` branch, firmware and host tests pin the same published RMK
+Git revision in their Cargo manifests. A separate local RMK checkout is not
+required. See [the experiment notebook](PROTOTYPE.md) for baseline revisions,
+measurement procedures, and validation status.
+
+This baseline migrates to current RMK main plus the rebased ordered tap-hold PR;
+it is not a power optimization. RMK's Embassy patches are repeated in both
+root Cargo manifests because dependency patches do not propagate to consumers.
+Record the Urchin revision and pinned RMK revision for reproducibility. Changes
+to RMK or Cargo features can clear stored settings and bonds, requiring host and split re-pairing.
+Stored/Vial keymaps can override compiled defaults; back up custom mappings
+before resetting them. Do not assume former BT4/BT5 bonds remain accessible.
 
 ## Vial
 
@@ -198,7 +203,7 @@ SPI recovery/cancellation, screen sleep, 5 ms debounce, and representative
 tap/hold typing. Keymap checks resolve the actual `keyboard.toml` and exercise
 all four physical thumb taps/holds, both tertiary chord taps/holds in either
 press/release order, and all six opposite-hand tertiary actions. Firmware and
-host tests use the same pinned RMK revision. Typing regressions also retain
+host tests use the same pinned RMK Git revision. Typing regressions also retain
 capital I after Space without a stray A and early layer-thumb Quote without
 a base-layer M.
 

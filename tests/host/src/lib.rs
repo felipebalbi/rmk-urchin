@@ -1,4 +1,4 @@
-//! Host checks compile the actual firmware modules against the pinned upstream RMK.
+//! Host checks compile the actual firmware modules against the pinned RMK Git revision.
 
 #![cfg(test)]
 
@@ -567,15 +567,15 @@ mod tests {
         }));
         publish_event(CentralConnectedEvent { connected: true });
         let mut connection = ConnectionStatus::new();
-        connection.ble.profile = 5;
-        connection.ble.state = BleState::Advertising;
-        publish_event(ConnectionStatusChangeEvent(connection));
+        connection.selected = 3;
+        connection.ble[3].state = BleState::Advertising;
+        publish_event(ConnectionStatusChangeEvent(connection.clone()));
         publish_event(LayerChangeEvent(3));
         central.drain_into(&mut c);
         peripheral.drain_into(&mut p);
         let mut expected = ScreenState::new(Role::Central);
         expected.set_battery(Some(73));
-        expected.set_host(5, HostLink::Advertising);
+        expected.set_host(3, HostLink::Advertising);
         expected.set_layer(3);
         assert_eq!(c, expected);
         let mut expected_p = ScreenState::new(Role::Peripheral);
@@ -583,13 +583,13 @@ mod tests {
         expected_p.set_central_connected(true);
         assert_eq!(p, expected_p);
         for i in 0..30 {
-            connection.ble.profile = (i % 6) as u8;
-            connection.ble.state = BleState::Connected;
-            publish_event(ConnectionStatusChangeEvent(connection));
+            connection.selected = (i % 4) as u8;
+            connection.ble[connection.selected as usize].state = BleState::Connected;
+            publish_event(ConnectionStatusChangeEvent(connection.clone()));
             publish_event(LayerChangeEvent((i % 4) as u8));
         }
         central.drain_into(&mut c);
-        expected.set_host(5, HostLink::Connected);
+        expected.set_host(1, HostLink::Connected);
         expected.set_layer(1);
         assert_eq!(c, expected);
         publish_event(BatteryStatusEvent(BatteryStatus::Unavailable));
@@ -825,8 +825,8 @@ mod tests {
         publish_event(CentralConnectedEvent { connected: true });
         publish_event(LayerChangeEvent(3));
         let mut connection = ConnectionStatus::new();
-        connection.ble.profile = 5;
-        connection.ble.state = BleState::Connected;
+        connection.selected = 3;
+        connection.ble[3].state = BleState::Connected;
         publish_event(ConnectionStatusChangeEvent(connection));
         let mut running = Box::pin(processor.polling_loop());
         let mut cx = Context::from_waker(futures::task::noop_waker_ref());
@@ -1007,7 +1007,7 @@ mod tests {
         RIGHT_USB.store(true, Ordering::Relaxed);
         let mut remote = ConnectionStatus::new();
         remote.usb = UsbState::Disabled;
-        rmk::event::publish_event(ConnectionStatusChangeEvent(remote));
+        rmk::event::publish_event(ConnectionStatusChangeEvent(remote.clone()));
         driver.advance(embassy_time::Duration::from_micros(112_000));
         futures::executor::block_on(async {
             central.update().await;

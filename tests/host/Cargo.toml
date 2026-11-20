@@ -10,8 +10,8 @@ embedded-hal = "1"
 embedded-hal-async = "1"
 heapless = "0.9"
 futures = "0.3"
-rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "18300680e2f16046643b9f8151abae891df998a4", default-features = false, features = ["std", "log", "split", "buffered_tap_hold"] }
-rmk-config = { git = "https://github.com/felipebalbi/rmk.git", rev = "18300680e2f16046643b9f8151abae891df998a4" }
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "e9e726304cb34aa36583f900be1c54da41fe0fde", default-features = false, features = ["std", "log", "split"] }
+rmk-config = { git = "https://github.com/felipebalbi/rmk.git", rev = "e9e726304cb34aa36583f900be1c54da41fe0fde" }
 # rmk-config enables serde/std in native tests. Match that feature on the
 # legacy serializer used by embassy-usb so its Error implements StdError.
 ssmarshal = { version = "1.0", features = ["std"] }
@@ -21,3 +21,14 @@ critical-section = { version = "1", features = ["std"] }
 log = "0.4"
 embedded-hal-mock = { version = "0.11.1", default-features = false, features = ["eh1", "embedded-hal-async"] }
 serde_json = "1"
+
+# Match the firmware's Embassy revision in this separate workspace too.
+[patch.crates-io]
+embassy-futures = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-time-driver = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-time-queue-utils = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-usb = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-usb-driver = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-executor-timer-queue = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }

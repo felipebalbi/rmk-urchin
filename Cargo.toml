@@ -8,13 +8,12 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Firmware and native checks pin the upstream, tap-hold, and USB readiness integration.
-rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "18300680e2f16046643b9f8151abae891df998a4", default-features = false, features = [
+# Pin the published main-plus-ordered-tap-hold baseline for reproducible measurements.
+rmk = { git = "https://github.com/felipebalbi/rmk.git", rev = "e9e726304cb34aa36583f900be1c54da41fe0fde", default-features = false, features = [
     "nrf52840_ble",
     "split",
     "subrating",
     "async_matrix",
-    "buffered_tap_hold",
     "adafruit_bl",
     "storage",
     "vial",
@@ -91,3 +90,18 @@ debug = true            # no overhead for bare-metal
 opt-level = "z"         # optimize for binary size
 overflow-checks = false
 lto = "fat"
+
+# Root-workspace patches must match RMK: USB modules and watchdog APIs changed
+# on Embassy main without a version bump.
+[patch.crates-io]
+embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-futures = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-hal-internal = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-nrf = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-time-driver = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-time-queue-utils = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-usb = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-usb-driver = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }
+embassy-executor-timer-queue = { git = "https://github.com/embassy-rs/embassy", rev = "12b84e3dd8d6b31f045649b84250292c34e024d4" }

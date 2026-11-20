@@ -39,7 +39,6 @@ pub(crate) fn profile(p: &rmk_config::resolved::behavior::MorseProfile) -> Morse
         p.gap_timeout_ms.map(|t| t.try_into().unwrap()),
     )
     .with_enable_flow_tap(p.enable_flow_tap)
-    .with_buffered_tap_hold(p.buffered_tap_hold)
     .with_quick_tap_timeout_ms(p.quick_tap_timeout_ms.map(|t| t.try_into().unwrap()))
 }
 
@@ -119,7 +118,7 @@ use Step::{At, Down, Up, Wait};
 #[derive(Clone, Copy)]
 enum Policy {
     Configured,
-    LegacyFlowTap,
+    FlowTap,
 }
 
 fn sequence(prior_gap_ms: Option<u64>, steps: &[Step]) -> Trace {
@@ -132,16 +131,12 @@ fn sequence_for(policy: Policy, prior_gap_ms: Option<u64>, steps: &[Step]) -> Tr
     rmk::state::set_usb_state(rmk::types::connection::UsbState::Configured);
     rmk::channel::USB_REPORT_CHANNEL.clear();
     let (mut behavior, thumb) = configured_behavior();
-    if matches!(policy, Policy::LegacyFlowTap) {
+    if matches!(policy, Policy::FlowTap) {
         behavior.morse.enable_flow_tap = true;
         behavior.morse.default_profile = behavior
             .morse
             .default_profile
-            .with_enable_flow_tap(Some(true))
-            .with_buffered_tap_hold(Some(false));
-        for profile in &mut behavior.morse.profiles {
-            *profile = profile.with_buffered_tap_hold(Some(false));
-        }
+            .with_enable_flow_tap(Some(true));
     }
     let key = |k| Action::Key(KeyCode::Hid(k));
     // 0=A/Shift, 1=S/Alt, 2=Q, 3=H, 4=Tab/layer 1,
@@ -259,11 +254,7 @@ fn thumb_rolls_during_typing_emit_tab_or_backspace_before_the_next_letter() {
 
 #[test]
 fn nested_opposite_hand_key_during_typing_does_not_turn_a_into_shift() {
-    let trace = sequence_for(
-        Policy::LegacyFlowTap,
-        Some(30),
-        &[Down(0), Down(3), Up(3), Up(0)],
-    );
+    let trace = sequence_for(Policy::FlowTap, Some(30), &[Down(0), Down(3), Up(3), Up(0)]);
     assert_eq!(trace.presses, [K::A, K::H]);
     assert!(trace.modifiers.iter().all(|m| *m == 0));
     assert_eq!(trace.held, [0; 6]);
@@ -296,7 +287,7 @@ fn deliberate_thumb_layer_holds_still_work_after_a_typing_pause() {
 fn thumb_started_during_typing_stays_a_tap_even_if_held_past_the_timeout() {
     for (thumb, tap) in [(4, K::Tab), (5, K::Backspace)] {
         let trace = sequence_for(
-            Policy::LegacyFlowTap,
+            Policy::FlowTap,
             Some(30),
             &[Down(thumb), Wait(250), Up(thumb)],
         );

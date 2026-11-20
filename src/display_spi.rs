@@ -150,7 +150,7 @@ mod nrf {
     ///
     /// Nordic nRF52840 PS v1.1 §§6.25.1/6.25.4: STOP completes the current byte,
     /// STOPPED means stopped, END means both DMA buffers are no longer accessed.
-    pub struct DisplaySpi<'d>(CancelSafe<spim::Spim<'d>, Spi2Control>);
+    pub struct DisplaySpi<'d>(CancelSafe<spim::Spim<'d, embassy_nrf::mode::Async>, Spi2Control>);
 
     impl<'d> DisplaySpi<'d> {
         pub fn new(
@@ -163,7 +163,7 @@ mod nrf {
             mosi: Peri<'d, peripherals::P0_17>,
             config: spim::Config,
         ) -> Self {
-            let spi = spim::Spim::new_txonly(spi, irq, sck, mosi, config);
+            let spi = spim::Spim::new_txonly(spi, sck, mosi, irq, config);
             // SAFETY: construction consumes the unique SPI2 token, the abort
             // register block is exactly SPIM2, and HAL's END-only ISR does not
             // start transfers. The private wrapper prevents bypassing guards.

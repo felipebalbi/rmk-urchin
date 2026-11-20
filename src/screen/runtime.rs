@@ -39,12 +39,12 @@ impl ScreenEvent {
                 });
             }
             Self::Host(event) => {
-                let link = match event.0.ble.state {
+                let link = match event.0.selected_profile().state {
                     BleState::Inactive => HostLink::Inactive,
                     BleState::Advertising => HostLink::Advertising,
                     BleState::Connected => HostLink::Connected,
                 };
-                state.set_host(event.0.ble.profile, link);
+                state.set_host(event.0.selected, link);
             }
             Self::Layer(event) => {
                 state.set_layer(event.0);
